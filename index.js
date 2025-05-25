@@ -1,9 +1,12 @@
 require('dotenv').config();
-const { Client, Collection, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, ActivityType } = require('discord.js');
 const { DisTube } = require('distube');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
+const { SpotifyPlugin } = require('@distube/spotify');
+const { SoundCloudPlugin } = require('@distube/soundcloud');
 const fs = require('fs');
 const path = require('path');
+const checkAndUpdateCommands = require('./update-commands');
 
 const client = new Client({
   intents: [
@@ -36,5 +39,25 @@ for (const file of fs.readdirSync(eventsPath)) {
 
 // Instanciar DisTube con la configuración avanzada
 require('./config/distube')(client);
+
+// Estado del bot y actualización de comandos
+client.on('ready', async () => {
+  // Establecer estado del bot
+  client.user.setPresence({
+    activities: [{ 
+      name: '/help | Música para Discord', 
+      type: ActivityType.Listening 
+    }],
+    status: 'online'
+  });
+  
+  // Verificar y actualizar comandos si es necesario
+  await checkAndUpdateCommands();
+  
+  // Configurar actualización periódica de comandos (cada 6 horas)
+  setInterval(async () => {
+    await checkAndUpdateCommands();
+  }, 6 * 60 * 60 * 1000);
+});
 
 client.login(process.env.TOKEN);

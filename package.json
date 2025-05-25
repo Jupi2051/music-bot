@@ -1,14 +1,16 @@
 {
-  "name": "bot-musica",
+  "name": "gordodj-bot-musica",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js",
+    "dev": "nodemon index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": ["discord", "bot", "music", "distube", "discord.js"],
+  "author": "Santino",
+  "license": "MIT",
+  "description": "Un bot de música para Discord que reproduce música de YouTube, Spotify y SoundCloud",
   "dependencies": {
     "@discordjs/opus": "^0.10.0",
     "@distube/soundcloud": "^2.0.4",
@@ -17,5 +19,16 @@
     "discord.js": "^14.19.3",
     "distube": "^5.0.7",
     "dotenv": "^16.5.0"
-  }
+  },
+  "engines": {
+    "node": ">=16.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tuusuario/gordodj.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tuusuario/gordodj/issues"
+  },
+  "homepage": "https://github.com/tuusuario/gordodj#readme"
 }

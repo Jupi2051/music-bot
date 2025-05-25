@@ -6,6 +6,7 @@ const { SoundCloudPlugin } = require('@distube/soundcloud');
 module.exports = (client) => {
   const distube = new DisTube(client, {
     emitNewSongOnly: true,
+    nsfw: false, // No permitir contenido para adultos
     plugins: [
       new SpotifyPlugin(),
       new SoundCloudPlugin(),
