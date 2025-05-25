@@ -65,10 +65,6 @@ Un bot de música para Discord que te permite reproducir música de YouTube, Spo
 
 Para opciones avanzadas de hosting, consulta [HOSTING.md](HOSTING.md).
 
-### Hosting en Replit (Recomendado)
-
-Este bot está optimizado para ser hosteado en Replit de forma gratuita. Para una guía detallada, consulta [REPLIT_GUIDE.md](REPLIT_GUIDE.md).
-
 ## Configuración en Discord Developer Portal
 
 1. Ve a [Discord Developer Portal](https://discord.com/developers/applications)

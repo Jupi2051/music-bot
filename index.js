@@ -7,7 +7,6 @@ const { SoundCloudPlugin } = require('@distube/soundcloud');
 const fs = require('fs');
 const path = require('path');
 const checkAndUpdateCommands = require('./update-commands');
-const keepAlive = require('./server'); // Importar el servidor web
 
 const client = new Client({
   intents: [
@@ -60,8 +59,5 @@ client.on('ready', async () => {
     await checkAndUpdateCommands();
   }, 6 * 60 * 60 * 1000);
 });
-
-// Iniciar el servidor web para mantener el bot activo en Replit
-keepAlive();
 
 client.login(process.env.TOKEN);
