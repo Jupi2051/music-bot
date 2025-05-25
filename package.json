@@ -7,7 +7,13 @@
     "deploy": "node deploy-commands.js",
     "dev": "nodemon index.js"
   },
-  "keywords": ["discord", "bot", "music", "distube", "discord.js"],
+  "keywords": [
+    "discord",
+    "bot",
+    "music",
+    "distube",
+    "discord.js"
+  ],
   "author": "Santino",
   "license": "MIT",
   "description": "Un bot de música para Discord que reproduce música de YouTube, Spotify y SoundCloud",
@@ -18,7 +24,8 @@
     "@distube/yt-dlp": "^2.0.1",
     "discord.js": "^14.19.3",
     "distube": "^5.0.7",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0"
   },
   "engines": {
     "node": ">=16.9.0"
