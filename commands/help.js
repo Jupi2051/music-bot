@@ -14,15 +14,9 @@ module.exports = {
       '`/queue` - Muestra la lista de canciones en cola',
       '`/volume [1-100]` - Cambia el volumen del bot'
     ].join('\n');
-    
-    const utilityCommands = [
-      '`/help` - Muestra esta lista de comandos',
-      '`/ping` - Comprueba la latencia del bot',
-      '`/stats` - Muestra estadísticas del bot'
-    ].join('\n');
 
     await interaction.reply({ 
-      content: `🎵 **Comandos de música:**\n${musicCommands}\n\n🔧 **Utilidades:**\n${utilityCommands}`, 
+      content: `🎵 **Comandos disponibles:**\n${musicCommands}`, 
       flags: 64 
     });
   }

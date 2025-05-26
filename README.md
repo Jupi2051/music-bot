@@ -12,7 +12,6 @@ Un bot de música para Discord que te permite reproducir música de YouTube, Spo
 
 ## Comandos
 
-### Comandos de Música
 - `/play [cancion]` - Reproduce una canción o playlist
 - `/stop` - Detiene la música y el bot sale del canal de voz
 - `/skip` - Salta a la siguiente canción
@@ -20,12 +19,7 @@ Un bot de música para Discord que te permite reproducir música de YouTube, Spo
 - `/resume` - Reanuda la canción pausada
 - `/queue` - Muestra la lista de canciones en cola
 - `/volume [1-100]` - Cambia el volumen del bot
-- `/nowplaying` - Muestra información detallada sobre la canción actual
-
-### Comandos de Utilidad
 - `/help` - Muestra la lista de comandos disponibles
-- `/ping` - Comprueba la latencia del bot
-- `/stats` - Muestra estadísticas del bot
 
 ## Requisitos
 
