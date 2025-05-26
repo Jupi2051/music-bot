@@ -7,7 +7,6 @@ module.exports = (client) => {
   const distube = new DisTube(client, {
     emitNewSongOnly: true,
     nsfw: false, // No permitir contenido para adultos
-    searchSongs: 0, // No mostrar resultados de búsqueda, reproducir el primero
     plugins: [
       new SpotifyPlugin(),
       new SoundCloudPlugin(),
