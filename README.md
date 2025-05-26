@@ -2,6 +2,12 @@
 
 Un bot de música para Discord que te permite reproducir música de YouTube, Spotify, SoundCloud y más directamente en tus canales de voz.
 
+## Invitar al Bot
+
+Para añadir GordoDJ a tu servidor, haz clic en el siguiente enlace:
+
+[**Invitar GordoDJ a tu servidor**](https://discord.com/api/oauth2/authorize?client_id=1376190250120122452&permissions=3145728+2048+16384+65536+2097152+1048576+2097152+4194304&scope=bot%20applications.commands)
+
 ## Características
 
 - Reproducción de música desde múltiples fuentes (YouTube, Spotify, SoundCloud)
@@ -71,6 +77,16 @@ Para opciones avanzadas de hosting, consulta [HOSTING.md](HOSTING.md).
 5. Ve a OAuth2 > URL Generator, selecciona los scopes "bot" y "applications.commands"
 6. Selecciona los permisos necesarios (al menos "Send Messages", "Connect", "Speak")
 7. Usa la URL generada para invitar al bot a tus servidores
+
+## Generar Enlace de Invitación
+
+También puedes generar un enlace de invitación personalizado usando el script incluido:
+
+```bash
+node generate-invite.js
+```
+
+Este script generará un enlace con todos los permisos necesarios para que el bot funcione correctamente.
 
 ## Dependencias
 
