@@ -16,8 +16,17 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+# Verificar Docker Compose (funciona con v1 y v2)
+COMPOSE_CMD=""
+if command -v docker-compose &> /dev/null; then
+    COMPOSE_CMD="docker-compose"
+    echo "✅ Usando docker-compose (v1)"
+elif docker compose version &> /dev/null; then
+    COMPOSE_CMD="docker compose"
+    echo "✅ Usando docker compose (v2)"
+else
     echo "❌ Docker Compose no está instalado. Instálalo primero."
+    echo "💡 Para instalar Docker Compose v2: sudo apt install docker-compose-plugin"
     exit 1
 fi
 
@@ -31,12 +40,12 @@ fi
 mkdir -p data logs
 
 echo "📦 Construyendo imagen Docker..."
-docker-compose -f $COMPOSE_FILE build
+$COMPOSE_CMD -f $COMPOSE_FILE build
 
 echo "🔄 Iniciando contenedores..."
-docker-compose -f $COMPOSE_FILE up -d
+$COMPOSE_CMD -f $COMPOSE_FILE up -d
 
 echo "✅ GordoDJ iniciado exitosamente!"
-echo "📊 Para ver logs: docker-compose logs -f"
-echo "🛑 Para detener: docker-compose down"
-echo "📈 Para ver estado: docker-compose ps"
+echo "📊 Para ver logs: $COMPOSE_CMD logs -f"
+echo "🛑 Para detener: $COMPOSE_CMD down"
+echo "📈 Para ver estado: $COMPOSE_CMD ps"

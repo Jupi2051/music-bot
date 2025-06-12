@@ -9,12 +9,18 @@ sudo apt update && sudo apt upgrade -y
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
-# Instalar Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+# Instalar Docker Compose Plugin (v2) - RECOMENDADO
+sudo apt install docker-compose-plugin
+
+# Alternativamente, Docker Compose v1 (legacy):
+# sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+# sudo chmod +x /usr/local/bin/docker-compose
 
 # Agregar usuario al grupo docker
 sudo usermod -aG docker $USER
+
+# IMPORTANTE: Reiniciar sesión o ejecutar:
+newgrp docker
 ```
 
 ## Despliegue en VM:
@@ -39,6 +45,14 @@ sudo usermod -aG docker $USER
 
 ## Comandos útiles:
 
+### Docker Compose v2 (recomendado):
+- Ver logs: `docker compose logs -f gordodj`
+- Reiniciar: `docker compose restart gordodj`
+- Detener: `docker compose down`
+- Actualizar: `docker compose pull && docker compose up -d`
+- Ver estado: `docker compose ps`
+
+### Docker Compose v1 (legacy):
 - Ver logs: `docker-compose logs -f gordodj`
 - Reiniciar: `docker-compose restart gordodj`
 - Detener: `docker-compose down`
