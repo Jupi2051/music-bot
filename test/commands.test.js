@@ -345,6 +345,30 @@ describe('play', () => {
     assert.equal(options.member, interaction.member);
   });
 
+  test('extrae la URL si el usuario pegó el texto del mensaje del bot', async () => {
+    const pasted = '🔍 Buscando: `https://www.youtube.com/watch?v=eBqthnZnu3Y`';
+    const interaction = makeInteraction({
+      guildId: 'guild-play-pasted',
+      options: { getString: () => pasted },
+    });
+    const client = makeClient();
+    await play.execute(interaction, client);
+    const [voiceChannel, query] = client.distube.play.mock.calls[0].arguments;
+    assert.equal(query, 'https://www.youtube.com/watch?v=eBqthnZnu3Y');
+    assert.equal(voiceChannel, interaction.member.voice.channel);
+  });
+
+  test('limpia backticks envolventes de un query sin URL', async () => {
+    const interaction = makeInteraction({
+      guildId: 'guild-play-backticks',
+      options: { getString: () => '`mi canción`' },
+    });
+    const client = makeClient();
+    await play.execute(interaction, client);
+    const [, query] = client.distube.play.mock.calls[0].arguments;
+    assert.equal(query, 'mi canción');
+  });
+
   test('edita la respuesta con error si distube.play() falla', async (t) => {
     mock.method(console, 'error', () => {});
     t.after(() => mock.restoreAll());

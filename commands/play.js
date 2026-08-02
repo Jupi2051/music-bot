@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, escapeMarkdown } = require('discord.js');
-const { MAX_QUEUE_SIZE, checkCooldown } = require('../utils/helpers');
+const { MAX_QUEUE_SIZE, checkCooldown, cleanQuery } = require('../utils/helpers');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,7 +11,7 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction, client) {
-    const query = interaction.options.getString('cancion');
+    const query = cleanQuery(interaction.options.getString('cancion'));
     const voiceChannel = interaction.member.voice.channel;
     if (!voiceChannel) return interaction.reply('❌ Debes estar en un canal de voz.');
 
