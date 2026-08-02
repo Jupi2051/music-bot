@@ -36,9 +36,6 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# Crear directorios necesarios
-mkdir -p data logs
-
 echo "📦 Construyendo imagen Docker..."
 $COMPOSE_CMD -f $COMPOSE_FILE build
 

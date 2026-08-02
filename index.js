@@ -78,6 +78,22 @@ client.on('ready', async () => {
   setInterval(async () => {
     await checkAndUpdateCommands();
   }, 6 * 60 * 60 * 1000);
+
+  // Heartbeat para el healthcheck del contenedor (escribe bot-state.json cada 30s)
+  const writeHeartbeat = () => {
+    const state = {
+      lastUpdate: Date.now(),
+      wsPing: client.ws.ping,
+      guildCount: client.guilds.cache.size,
+    };
+    try {
+      fs.writeFileSync(path.join(__dirname, 'bot-state.json'), JSON.stringify(state));
+    } catch (err) {
+      console.error('Error al escribir bot-state.json:', err);
+    }
+  };
+  writeHeartbeat();
+  setInterval(writeHeartbeat, 30000);
 });
 
 client.login(process.env.TOKEN).catch((err) => {

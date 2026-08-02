@@ -1,13 +1,13 @@
-FROM node:18-slim
+FROM node:22-bookworm-slim
 
-# Instalar dependencias del sistema
+# Dependencias del sistema: ffmpeg (transcodificación de audio) y toolchain de
+# compilación (build-essential + python3) para @discordjs/opus: no hay prebuild
+# para Node 22 (ABI 127), así que node-gyp compila desde source
 RUN apt-get update && \
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
     ffmpeg \
-    python3 \
     build-essential \
-    git \
-    curl \
+    python3 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -15,30 +15,23 @@ RUN apt-get update && \
 RUN groupadd --gid 1001 --system nodejs && \
     useradd --uid 1001 --system --gid nodejs --shell /bin/bash --create-home nodejs
 
-# Crear directorio de trabajo
 WORKDIR /app
 
-# Cambiar propietario del directorio
-RUN chown -R nodejs:nodejs /app
-
-# Copiar archivos de dependencias primero (para aprovechar cache de Docker)
-COPY --chown=nodejs:nodejs package*.json ./
+# Copiar manifests primero (aprovecha cache de Docker)
+COPY package*.json ./
 
 # Instalar dependencias como root (necesario para compilar módulos nativos)
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Dar permisos de ejecución a binarios de yt-dlp
-RUN find /app/node_modules/@distube/yt-dlp/bin -type f -exec chmod +x {} \; || true
+# Fijar ownership DESPUÉS del npm ci: node_modules debe pertenecer al usuario
+# no-root para que yt-dlp pueda auto-actualizarse en runtime
+RUN chown -R nodejs:nodejs /app
 
 # Cambiar a usuario no-root
 USER nodejs
 
 # Copiar el código fuente
 COPY --chown=nodejs:nodejs . .
-
-# Crear directorios necesarios
-RUN mkdir -p /app/data && \
-    mkdir -p /app/logs
 
 # Variables de entorno por defecto
 ENV NODE_ENV=production
