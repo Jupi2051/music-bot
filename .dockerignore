@@ -11,6 +11,11 @@ LICENSE
 Dockerfile
 .dockerignore
 commands-state.json
+bot-state.json
+cookies.txt
 logs/
 data/
+coverage/
+test/
+.atl/
 *.log

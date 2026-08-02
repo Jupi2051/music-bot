@@ -10,7 +10,7 @@ module.exports = {
     if (!queue) return interaction.reply({ content: '❌ No hay música reproduciéndose.', ephemeral: true });
 
     const controlError = assertControl(interaction, queue.voiceChannel?.id);
-    if (controlError) return interaction.reply(controlError);
+    if (controlError) return interaction.reply({ content: controlError, ephemeral: true });
 
     try {
       await queue.stop();

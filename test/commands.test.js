@@ -71,18 +71,25 @@ function replyArg(interaction, callIndex = 0) {
   return interaction.reply.mock.calls[callIndex].arguments[0];
 }
 
+// Normaliza el argumento del reply: los comandos responden con string o con
+// { content, ephemeral }; esto extrae el texto en ambos casos.
+function replyContent(interaction, callIndex = 0) {
+  const arg = replyArg(interaction, callIndex);
+  return typeof arg === 'string' ? arg : arg.content;
+}
+
 describe('pause', () => {
   test('responde error si no hay cola', async () => {
     const interaction = makeInteraction();
     await pause.execute(interaction, makeClient({ queue: null }));
-    assert.equal(replyArg(interaction), '❌ No hay música reproduciéndose.');
+    assert.equal(replyContent(interaction), '❌ No hay música reproduciéndose.');
   });
 
   test('responde error si la cola está pausada (playing=false)', async () => {
     const interaction = makeInteraction();
     const queue = makeQueue({ playing: false });
     await pause.execute(interaction, makeClient({ queue }));
-    assert.equal(replyArg(interaction), '❌ No hay música reproduciéndose.');
+    assert.equal(replyContent(interaction), '❌ No hay música reproduciéndose.');
     assert.equal(queue.pause.mock.calls.length, 0);
   });
 
@@ -90,7 +97,7 @@ describe('pause', () => {
     const interaction = makeInteraction({ member: { voice: { channel: { id: VC_OTHER } } } });
     const queue = makeQueue();
     await pause.execute(interaction, makeClient({ queue }));
-    assert.equal(replyArg(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
+    assert.equal(replyContent(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
     assert.equal(queue.pause.mock.calls.length, 0);
   });
 
@@ -99,7 +106,20 @@ describe('pause', () => {
     const queue = makeQueue();
     await pause.execute(interaction, makeClient({ queue }));
     assert.equal(queue.pause.mock.calls.length, 1);
-    assert.equal(replyArg(interaction), '⏸️ Música pausada.');
+    assert.equal(replyContent(interaction), '⏸️ Música pausada.');
+  });
+
+  test('responde error si pause() falla', async (t) => {
+    mock.method(console, 'error', () => {});
+    t.after(() => mock.restoreAll());
+    const interaction = makeInteraction();
+    const queue = makeQueue({
+      pause: mock.fn(async () => {
+        throw new Error('voice lost');
+      }),
+    });
+    await pause.execute(interaction, makeClient({ queue }));
+    assert.equal(replyContent(interaction), '❌ No se pudo pausar la música.');
   });
 });
 
@@ -107,14 +127,14 @@ describe('resume', () => {
   test('responde error si no hay cola', async () => {
     const interaction = makeInteraction();
     await resume.execute(interaction, makeClient({ queue: null }));
-    assert.equal(replyArg(interaction), '❌ No hay música pausada.');
+    assert.equal(replyContent(interaction), '❌ No hay música pausada.');
   });
 
   test('responde error si la cola ya está reproduciendo (playing=true)', async () => {
     const interaction = makeInteraction();
     const queue = makeQueue({ playing: true });
     await resume.execute(interaction, makeClient({ queue }));
-    assert.equal(replyArg(interaction), '❌ No hay música pausada.');
+    assert.equal(replyContent(interaction), '❌ No hay música pausada.');
     assert.equal(queue.resume.mock.calls.length, 0);
   });
 
@@ -122,7 +142,7 @@ describe('resume', () => {
     const interaction = makeInteraction({ member: { voice: { channel: { id: VC_OTHER } } } });
     const queue = makeQueue({ playing: false });
     await resume.execute(interaction, makeClient({ queue }));
-    assert.equal(replyArg(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
+    assert.equal(replyContent(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
   });
 
   test('reanuda la cola y confirma', async () => {
@@ -130,7 +150,21 @@ describe('resume', () => {
     const queue = makeQueue({ playing: false });
     await resume.execute(interaction, makeClient({ queue }));
     assert.equal(queue.resume.mock.calls.length, 1);
-    assert.equal(replyArg(interaction), '▶️ Música reanudada.');
+    assert.equal(replyContent(interaction), '▶️ Música reanudada.');
+  });
+
+  test('responde error si resume() falla', async (t) => {
+    mock.method(console, 'error', () => {});
+    t.after(() => mock.restoreAll());
+    const interaction = makeInteraction();
+    const queue = makeQueue({
+      playing: false,
+      resume: mock.fn(async () => {
+        throw new Error('voice lost');
+      }),
+    });
+    await resume.execute(interaction, makeClient({ queue }));
+    assert.equal(replyContent(interaction), '❌ No se pudo reanudar la música.');
   });
 });
 
@@ -138,14 +172,14 @@ describe('skip', () => {
   test('responde error si no hay cola', async () => {
     const interaction = makeInteraction();
     await skip.execute(interaction, makeClient({ queue: null }));
-    assert.equal(replyArg(interaction), '❌ No hay música reproduciéndose.');
+    assert.equal(replyContent(interaction), '❌ No hay música reproduciéndose.');
   });
 
   test('responde error de control si el usuario está en otro canal', async () => {
     const interaction = makeInteraction({ member: { voice: { channel: { id: VC_OTHER } } } });
     const queue = makeQueue();
     await skip.execute(interaction, makeClient({ queue }));
-    assert.equal(replyArg(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
+    assert.equal(replyContent(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
     assert.equal(queue.skip.mock.calls.length, 0);
   });
 
@@ -157,17 +191,32 @@ describe('skip', () => {
     assert.equal(replyArg(interaction), '⏭️ Canción saltada.');
   });
 
-  test('responde que no hay más canciones cuando skip() falla', async (t) => {
+  test('responde que no hay más canciones cuando skip() tira NO_UP_NEXT', async (t) => {
     mock.method(console, 'error', () => {});
     t.after(() => mock.restoreAll());
     const interaction = makeInteraction();
     const queue = makeQueue({
       skip: mock.fn(async () => {
-        throw new Error('no more songs');
+        const err = new Error('no more songs');
+        err.errorCode = 'NO_UP_NEXT';
+        throw err;
       }),
     });
     await skip.execute(interaction, makeClient({ queue }));
     assert.equal(replyArg(interaction), '⚠️ No hay más canciones para saltar.');
+  });
+
+  test('responde error real si skip() falla por otra causa', async (t) => {
+    mock.method(console, 'error', () => {});
+    t.after(() => mock.restoreAll());
+    const interaction = makeInteraction();
+    const queue = makeQueue({
+      skip: mock.fn(async () => {
+        throw new Error('voice connection lost');
+      }),
+    });
+    await skip.execute(interaction, makeClient({ queue }));
+    assert.equal(replyArg(interaction), '❌ No se pudo saltar la canción.');
   });
 });
 
@@ -184,7 +233,9 @@ describe('stop', () => {
     const interaction = makeInteraction({ member: { voice: { channel: { id: VC_OTHER } } } });
     const queue = makeQueue();
     await stop.execute(interaction, makeClient({ queue }));
-    assert.equal(replyArg(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
+    const arg = replyArg(interaction);
+    assert.equal(arg.content, '❌ Debes estar en el mismo canal de voz que el bot.');
+    assert.equal(arg.ephemeral, true);
     assert.equal(queue.stop.mock.calls.length, 0);
   });
 
@@ -224,14 +275,14 @@ describe('volume', () => {
   test('responde error si no hay cola', async () => {
     const interaction = makeInteraction();
     await volume.execute(interaction, makeClient({ queue: null }));
-    assert.equal(replyArg(interaction), '❌ No hay música reproduciéndose.');
+    assert.equal(replyContent(interaction), '❌ No hay música reproduciéndose.');
   });
 
   test('responde error de control si el usuario está en otro canal', async () => {
     const interaction = makeInteraction({ member: { voice: { channel: { id: VC_OTHER } } } });
     const queue = makeQueue();
     await volume.execute(interaction, makeClient({ queue }));
-    assert.equal(replyArg(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
+    assert.equal(replyContent(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
   });
 
   test('ajusta el volumen con el valor parseado y confirma', async () => {
@@ -248,7 +299,7 @@ describe('queue', () => {
   test('responde que la cola está vacía si no hay cola', async () => {
     const interaction = makeInteraction();
     await queueCmd.execute(interaction, makeClient({ queue: null }));
-    assert.equal(replyArg(interaction), '📭 La cola está vacía.');
+    assert.equal(replyContent(interaction), '📭 La cola está vacía.');
   });
 
   test('muestra la cola formateada con los títulos de las canciones', async () => {
@@ -265,14 +316,14 @@ describe('leave', () => {
   test('responde error si el bot no está en un canal de voz', async () => {
     const interaction = makeInteraction();
     await leave.execute(interaction, makeClient({ connection: null }));
-    assert.equal(replyArg(interaction), '❌ El bot no está en un canal de voz.');
+    assert.equal(replyContent(interaction), '❌ El bot no está en un canal de voz.');
   });
 
   test('responde error de control si el usuario está en otro canal', async () => {
     const interaction = makeInteraction({ member: { voice: { channel: { id: VC_OTHER } } } });
     const connection = { channel: { id: VC_BOT }, leave: mock.fn(() => {}) };
     await leave.execute(interaction, makeClient({ connection }));
-    assert.equal(replyArg(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
+    assert.equal(replyContent(interaction), '❌ Debes estar en el mismo canal de voz que el bot.');
     assert.equal(connection.leave.mock.calls.length, 0);
   });
 
@@ -308,7 +359,7 @@ describe('play', () => {
     const interaction = makeInteraction({ member: { voice: { channel: null } } });
     const client = makeClient();
     await play.execute(interaction, client);
-    assert.equal(replyArg(interaction), '❌ Debes estar en un canal de voz.');
+    assert.equal(replyContent(interaction), '❌ Debes estar en un canal de voz.');
     assert.equal(client.distube.play.mock.calls.length, 0);
   });
 
@@ -318,7 +369,7 @@ describe('play', () => {
     await play.execute(interaction, client);
     await play.execute(interaction, client);
     assert.equal(interaction.reply.mock.calls.length, 2);
-    assert.equal(replyArg(interaction, 1), '⏳ Esperá unos segundos antes de pedir otra canción.');
+    assert.equal(replyContent(interaction, 1), '⏳ Esperá unos segundos antes de pedir otra canción.');
     assert.equal(client.distube.play.mock.calls.length, 1);
   });
 
@@ -328,7 +379,7 @@ describe('play', () => {
       queue: makeQueue({ songs: Array.from({ length: 100 }, () => ({ name: 'x' })) }),
     });
     await play.execute(interaction, client);
-    assert.equal(replyArg(interaction), '❌ La cola está llena (máximo 100 canciones).');
+    assert.equal(replyContent(interaction), '❌ La cola está llena (máximo 100 canciones).');
     assert.equal(client.distube.play.mock.calls.length, 0);
   });
 

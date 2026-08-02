@@ -41,6 +41,7 @@ client.on('error', (err) => {
 // Cargar comandos
 const commandsPath = path.join(__dirname, 'commands');
 for (const file of fs.readdirSync(commandsPath)) {
+  if (!file.endsWith('.js')) continue; // ignorar archivos no-comando (evita crash loop)
   const command = require(path.join(commandsPath, file));
   client.commands.set(command.data.name, command);
 }
@@ -72,10 +73,19 @@ client.on('clientReady', async () => {
   
   // Verificar y actualizar comandos si es necesario
   await checkAndUpdateCommands();
-  
-  // Configurar actualización periódica de comandos (cada 6 horas)
+
+  // Actualización periódica de comandos (cada 6 horas) con guard
+  // anti-solapamiento: si una actualización tarda más de 6h (API lenta o
+  // bloqueo), la siguiente ejecución se saltea en vez de pisarse.
+  let isUpdating = false;
   setInterval(async () => {
-    await checkAndUpdateCommands();
+    if (isUpdating) return;
+    isUpdating = true;
+    try {
+      await checkAndUpdateCommands();
+    } finally {
+      isUpdating = false;
+    }
   }, 6 * 60 * 60 * 1000);
 
   // Heartbeat para el healthcheck del contenedor (escribe bot-state.json cada 30s)

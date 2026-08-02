@@ -6,7 +6,7 @@ module.exports = {
     .setDescription('Muestra la cola de reproducción'),
   async execute(interaction, client) {
     const queue = client.distube.getQueue(interaction);
-    if (!queue) return interaction.reply('📭 La cola está vacía.');
+    if (!queue) return interaction.reply({ content: '📭 La cola está vacía.', ephemeral: true });
 
     const songs = queue.songs
       .map((song, i) => `${i === 0 ? '🎶' : `${i}.`} ${escapeMarkdown(song.name)}`)

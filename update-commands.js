@@ -65,9 +65,12 @@ async function checkAndUpdateCommands() {
     console.log(`🔄 Se detectaron cambios en los comandos. Actualizando ${commands.length} comandos...`);
     
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
-    
+    // Fallback del CLIENT_ID (público por diseño): evita PUT a /applications/undefined/commands
+    // cuando falta en .env, que fallaba en silencio y dejaba los comandos sin registrar.
+    const clientId = process.env.CLIENT_ID || '1376190250120122452';
+
     await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
+      Routes.applicationCommands(clientId),
       { body: commands }
     );
     

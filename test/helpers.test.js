@@ -3,7 +3,7 @@
 const { test, describe, mock, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { assertControl, checkCooldown } = require('../utils/helpers');
+const { assertControl, checkCooldown, cleanQuery } = require('../utils/helpers');
 
 function makeInteraction({ channelId = 'vc-1' } = {}) {
   return {
@@ -70,5 +70,32 @@ describe('checkCooldown', () => {
     checkCooldown('helpers-key-c', 500);
     now = 1501;
     assert.equal(checkCooldown('helpers-key-c', 500), false);
+  });
+});
+
+describe('cleanQuery', () => {
+  test('devuelve texto plano sin cambios', () => {
+    assert.equal(cleanQuery('mi canción'), 'mi canción');
+  });
+
+  test('extrae la URL del mensaje pegado del bot', () => {
+    const pasted = '🔍 Buscando: `https://www.youtube.com/watch?v=eBqthnZnu3Y`';
+    assert.equal(cleanQuery(pasted), 'https://www.youtube.com/watch?v=eBqthnZnu3Y');
+  });
+
+  test('recorta puntuación de cierre pegada a la URL', () => {
+    assert.equal(
+      cleanQuery('mirá https://www.youtube.com/watch?v=eBqthnZnu3Y).'),
+      'https://www.youtube.com/watch?v=eBqthnZnu3Y',
+    );
+  });
+
+  test('quita backticks envolventes de un query sin URL', () => {
+    assert.equal(cleanQuery('`mi canción`'), 'mi canción');
+  });
+
+  test('devuelve vacío para entradas no string', () => {
+    assert.equal(cleanQuery(null), '');
+    assert.equal(cleanQuery(undefined), '');
   });
 });

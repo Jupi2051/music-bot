@@ -7,10 +7,10 @@ module.exports = {
     .setDescription('Hace que el bot salga del canal de voz'),
   async execute(interaction, client) {
     const connection = client.distube.voices.get(interaction.guild.id);
-    if (!connection) return interaction.reply('❌ El bot no está en un canal de voz.');
+    if (!connection) return interaction.reply({ content: '❌ El bot no está en un canal de voz.', ephemeral: true });
 
     const controlError = assertControl(interaction, connection.channel?.id);
-    if (controlError) return interaction.reply(controlError);
+    if (controlError) return interaction.reply({ content: controlError, ephemeral: true });
 
     try {
       connection.leave();

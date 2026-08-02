@@ -1,12 +1,21 @@
 const MAX_QUEUE_SIZE = 100;
 
+// Guarda `{ at: timestamp }` por key para limpiar entradas vencidas y evitar
+// que el Map crezca sin límite en servidores con mucho uso.
 const cooldowns = new Map();
 
 function checkCooldown(key, ms) {
   const now = Date.now();
-  const last = cooldowns.get(key) || 0;
-  if (now - last < ms) return true;
-  cooldowns.set(key, now);
+
+  // Podar entradas vencidas: se recorre solo el Map, que es chico en la
+  // práctica (una key por canal/acción). Evita leaks de memoria.
+  for (const [storedKey, entry] of cooldowns) {
+    if (now - entry.at >= ms) cooldowns.delete(storedKey);
+  }
+
+  const entry = cooldowns.get(key);
+  if (entry && now - entry.at < ms) return true;
+  cooldowns.set(key, { at: now });
   return false;
 }
 
@@ -26,7 +35,11 @@ function cleanQuery(raw) {
   if (typeof raw !== 'string') return '';
   let text = raw.trim();
   const urlMatch = text.match(/https?:\/\/[^\s'`"<>]+/);
-  if (urlMatch) return urlMatch[0];
+  if (urlMatch) {
+    // Recortar puntuación de cierre pegada a la URL (ej: "https://...youtube.com/watch?v=x).")
+    // que los usuarios suelen incluir al copiar desde el chat o el navegador.
+    return urlMatch[0].replace(/[.,;:!?)]+$/, '');
+  }
   if (text.length > 1 && text.startsWith('`') && text.endsWith('`')) {
     text = text.slice(1, -1).trim();
   }
