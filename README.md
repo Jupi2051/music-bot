@@ -111,6 +111,10 @@ npm run test:integration  # Opt-in: red real contra YouTube (requiere binario yt
 
 Los tests de integración (`test/integration/`) quedan skipped en `npm test`; cubren la resolución de videos individuales y de radios RD acotadas (`--playlist-end 25`).
 
+## Mejoras futuras
+
+- **Escalado a cientos/miles de servidores**: sharding (una instancia por shard) + Redis para estado compartido + servicio de audio separado (Lavalink) + cookies/proxies rotativos para yt-dlp. El código ya está preparado (estado de colas aislado por guild en DisTube, sin estado global frágil); aplicar cuando el bot alcance ~100+ servidores o se acerque al límite práctico de guilds de discord.js (~2.500).
+
 ## Licencia
 
 [MIT](LICENSE)
