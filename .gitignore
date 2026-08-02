@@ -32,3 +32,6 @@ cookies.txt
 # Estado de runtime del bot
 commands-state.json
 bot-state.json
+
+# Cache de skills de opencode (no pertenece al proyecto)
+.atl/
