@@ -166,10 +166,4 @@ describe('config/distube', () => {
     listeners.get('disconnect')({ textChannel: channel });
     assert.equal(state.sent[0], '👋 Me desconecté del canal.');
   });
-
-  test('searchNoResult: envía la query escapada al canal del mensaje', () => {
-    const { channel, state } = makeChannel();
-    listeners.get('searchNoResult')({ channel }, 'never gonna');
-    assert.equal(state.sent[0], '❌ No se encontraron resultados para `never gonna`');
-  });
 });

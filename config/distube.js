@@ -52,8 +52,5 @@ module.exports = (client) => {
     })
     .on('finish', queue => sendToChannel(queue?.textChannel, '✅ Reproducción terminada.'))
     .on('empty', queue => sendToChannel(queue?.textChannel, '📭 Canal de voz vacío, saliendo...'))
-    .on('disconnect', queue => sendToChannel(queue?.textChannel, '👋 Me desconecté del canal.'))
-    .on('searchNoResult', (message, query) => {
-      sendToChannel(message?.channel, `❌ No se encontraron resultados para \`${escapeMarkdown(query)}\``);
-    });
+    .on('disconnect', queue => sendToChannel(queue?.textChannel, '👋 Me desconecté del canal.'));
 };

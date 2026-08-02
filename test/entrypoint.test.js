@@ -25,7 +25,11 @@ test('entrypoint.sh limita playlists a 25 canciones (fix radios RD)', () => {
   assert.match(source, /--playlist-end 25/);
 });
 
-test('entrypoint.sh activa cookies solo si existe el archivo', () => {
+test('entrypoint.sh activa cookies solo si es un archivo regular no vacío', () => {
+  // `-f` (archivo regular) es crítico: en un deploy fresco sin cookies.txt,
+  // Docker monta un DIRECTORIO y `test -s` pasa contra directorios (st_size 4096),
+  // lo que haría fallar a yt-dlp al leer un directorio como archivo de cookies.
+  assert.match(source, /-f \/app\/cookies\.txt/);
   assert.match(source, /-s \/app\/cookies\.txt/);
   assert.match(source, /--cookies \/app\/cookies\.txt/);
 });

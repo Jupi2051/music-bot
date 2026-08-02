@@ -16,7 +16,10 @@ echo "--extractor-args youtube:player_client=android" >> /home/nodejs/.config/yt
 # 25 canciones máximas por playlist/radio (probado 2026-08, ~42s).
 echo "--playlist-end 25" >> /home/nodejs/.config/yt-dlp/config
 
-if [ -s /app/cookies.txt ]; then
+# Solo archivo regular y no vacío: en un deploy fresco sin cookies.txt, Docker
+# monta un DIRECTORIO en /app/cookies.txt y `test -s` pasa contra directorios
+# (st_size=4096) → yt-dlp fallaría leyendo un directorio como cookies.
+if [ -f /app/cookies.txt ] && [ -s /app/cookies.txt ]; then
   echo "--cookies /app/cookies.txt" >> /home/nodejs/.config/yt-dlp/config
   echo "🍪 Cookies de YouTube detectadas"
 else
