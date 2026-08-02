@@ -19,11 +19,14 @@ RUN groupadd --gid 1001 --system nodejs && \
 
 WORKDIR /app
 
-# Copiar manifests primero (aprovecha cache de Docker)
+# Copiar manifests y patches primero (aprovecha cache de Docker)
 COPY package*.json ./
+COPY patches/ ./patches/
 
-# Instalar dependencias como root (necesario para compilar módulos nativos)
-RUN npm ci --omit=dev && npm cache clean --force
+# Instalar dependencias como root (necesario para compilar módulos nativos).
+# Se instala TODO (incluye devDeps) para que el postinstall corra patch-package
+# (fix del bug de JSON.parse en @distube/yt-dlp), y luego se podan las devDeps.
+RUN npm ci && npx patch-package && npm prune --omit=dev && npm cache clean --force
 
 # Fijar ownership DESPUÉS del npm ci: node_modules debe pertenecer al usuario
 # no-root para que yt-dlp pueda auto-actualizarse en runtime

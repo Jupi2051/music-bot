@@ -6,7 +6,8 @@
     "start": "node index.js",
     "deploy": "node update-commands.js",
     "test": "node --test 'test/*.test.js'",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "postinstall": "patch-package"
   },
   "keywords": [
     "discord",
@@ -40,5 +41,8 @@
   "bugs": {
     "url": "https://github.com/tuusuario/gordodj/issues"
   },
-  "homepage": "https://github.com/tuusuario/gordodj#readme"
+  "homepage": "https://github.com/tuusuario/gordodj#readme",
+  "devDependencies": {
+    "patch-package": "^8.0.1"
+  }
 }
