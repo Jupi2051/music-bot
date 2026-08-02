@@ -2,6 +2,8 @@ const { DisTube } = require('distube');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
 const { SpotifyPlugin } = require('@distube/spotify');
 const { SoundCloudPlugin } = require('@distube/soundcloud');
+const { escapeMarkdown } = require('discord.js');
+const { MAX_QUEUE_SIZE } = require('../utils/helpers');
 
 module.exports = (client) => {
   const distube = new DisTube(client, {
@@ -25,13 +27,24 @@ module.exports = (client) => {
 
   distube
     .on('playSong', (queue, song) => {
-      sendToChannel(queue?.textChannel, `🎵 Reproduciendo: **${song.name}** [\`${song.formattedDuration}\`]`);
+      sendToChannel(queue?.textChannel, `🎵 Reproduciendo: **${escapeMarkdown(song.name)}** [\`${song.formattedDuration}\`]`);
     })
     .on('addSong', (queue, song) => {
-      sendToChannel(queue?.textChannel, `➕ Añadido: **${song.name}**`);
+      if (queue.songs.length > MAX_QUEUE_SIZE) {
+        queue.songs.splice(MAX_QUEUE_SIZE);
+        sendToChannel(queue?.textChannel, `⚠️ Cola llena (máximo ${MAX_QUEUE_SIZE} canciones). No se agregó: **${escapeMarkdown(song.name)}**`);
+        return;
+      }
+      sendToChannel(queue?.textChannel, `➕ Añadido: **${escapeMarkdown(song.name)}**`);
     })
     .on('addList', (queue, playlist) => {
-      sendToChannel(queue?.textChannel, `📃 Lista añadida: **${playlist.name}** con ${playlist.songs.length} canciones.`);
+      if (queue.songs.length > MAX_QUEUE_SIZE) {
+        const removed = queue.songs.length - MAX_QUEUE_SIZE;
+        queue.songs.splice(MAX_QUEUE_SIZE);
+        sendToChannel(queue?.textChannel, `📃 Lista añadida: **${escapeMarkdown(playlist.name)}** — se recortaron ${removed} canciones (máximo ${MAX_QUEUE_SIZE}).`);
+        return;
+      }
+      sendToChannel(queue?.textChannel, `📃 Lista añadida: **${escapeMarkdown(playlist.name)}** con ${playlist.songs.length} canciones.`);
     })
     .on('error', (error, queue) => {
       console.error('Error de reproducción:', error);
@@ -41,6 +54,6 @@ module.exports = (client) => {
     .on('empty', queue => sendToChannel(queue?.textChannel, '📭 Canal de voz vacío, saliendo...'))
     .on('disconnect', queue => sendToChannel(queue?.textChannel, '👋 Me desconecté del canal.'))
     .on('searchNoResult', (message, query) => {
-      sendToChannel(message?.channel, `❌ No se encontraron resultados para \`${query}\``);
+      sendToChannel(message?.channel, `❌ No se encontraron resultados para \`${escapeMarkdown(query)}\``);
     });
 };

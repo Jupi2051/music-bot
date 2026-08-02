@@ -240,9 +240,9 @@ Problemas:
 | F0.1 Firma evento `error` + unificar eventos | ✅ | `config/distube.js` firma v5 `(error, queue)` + helper `sendToChannel` con `.catch`; `events/distubeEvents.js` eliminado |
 | F0.2 Handlers globales + `.catch()` sends + `login().catch()` | ✅ | `index.js`: validación TOKEN, `unhandledRejection`/`uncaughtException`/`client.on('error')`, login con catch |
 | F0.3 Doble reply catch global | ✅ | `events/interactionCreate.js`: `replied/deferred` → `editReply`, si no `reply ephemeral` |
-| F1.1 Control de acceso | ⬜ | |
-| F1.2 Cooldowns y límites | ⬜ | |
-| F1.3 EscapeMarkdown | ⬜ | |
+| F1.1 Control de acceso | ✅ | `utils/helpers.js` `assertControl`: exige mismo voice channel en skip/stop/pause/resume/volume/leave |
+| F1.2 Cooldowns y límites | ✅ | `checkCooldown` 5s por guild+user en `/play`; `MAX_QUEUE_SIZE=100` con recorte en addSong/addList (DisTube v5 no tiene maxQueueSize nativo) |
+| F1.3 EscapeMarkdown | ✅ | `escapeMarkdown` en playSong/addSong/addList/searchNoResult/queue/play; error genérico en play.js (sin filtrar `error.message`) |
 | F2.1 Node 22 + lock + chown/yt-dlp | ⬜ | |
 | F2.2 Healthcheck real + límites + logs | ⬜ | |
 | F2.3 Huérfanos + volúmenes | ⬜ | |
