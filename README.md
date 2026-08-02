@@ -102,6 +102,15 @@ El contenedor incluye healthcheck real (heartbeat cada 30s), límites de memoria
 - @distube/soundcloud - Plugin para soporte de SoundCloud
 - dotenv - Para manejar variables de entorno
 
+## Testing
+
+```bash
+npm test                  # Unit tests (node:test, sin red ni dependencias extra)
+npm run test:integration  # Opt-in: red real contra YouTube (requiere binario yt-dlp local)
+```
+
+Los tests de integración (`test/integration/`) quedan skipped en `npm test`; cubren la resolución de videos individuales y de radios RD acotadas (`--playlist-end 25`).
+
 ## Licencia
 
 [MIT](LICENSE)

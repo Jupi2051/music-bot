@@ -60,7 +60,7 @@ for (const file of fs.readdirSync(eventsPath)) {
 require('./config/distube')(client);
 
 // Estado del bot y actualización de comandos
-client.on('ready', async () => {
+client.on('clientReady', async () => {
   // Establecer estado del bot
   client.user.setPresence({
     activities: [{ 
