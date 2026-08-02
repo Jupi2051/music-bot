@@ -28,3 +28,7 @@ coverage/
 *.swp
 *.swo
 cookies.txt
+
+# Estado de runtime del bot
+commands-state.json
+bot-state.json

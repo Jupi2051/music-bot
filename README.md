@@ -6,15 +6,23 @@ Un bot de música para Discord que te permite reproducir música de YouTube, Spo
 
 Para añadir GordoDJ a tu servidor, haz clic en el siguiente enlace:
 
-[**Invitar GordoDJ a tu servidor**](https://discord.com/api/oauth2/authorize?client_id=1376190250120122452&permissions=3145728+2048+16384+65536+2097152+1048576+2097152+4194304&scope=bot%20applications.commands)
+[**Invitar GordoDJ a tu servidor**](https://discord.com/api/oauth2/authorize?client_id=1376190250120122452&permissions=1024+2048+16384+65536+1048576+2097152&scope=bot%20applications.commands)
+
+También puedes regenerar el enlace en cualquier momento:
+
+```bash
+node generate-invite.js
+```
 
 ## Características
 
 - Reproducción de música desde múltiples fuentes (YouTube, Spotify, SoundCloud)
 - Comandos de control de reproducción (play, pause, resume, skip, stop)
 - Control de volumen
-- Cola de reproducción
+- Cola de reproducción con límite de 100 canciones
 - Soporte para playlists
+- Control de acceso: solo quien está en el mismo canal de voz controla el bot
+- Cooldown de 5s por usuario en `/play` para evitar abuso
 
 ## Comandos
 
@@ -25,12 +33,13 @@ Para añadir GordoDJ a tu servidor, haz clic en el siguiente enlace:
 - `/resume` - Reanuda la canción pausada
 - `/queue` - Muestra la lista de canciones en cola
 - `/volume [1-100]` - Cambia el volumen del bot
+- `/leave` - Hace que el bot salga del canal de voz
 - `/help` - Muestra la lista de comandos disponibles
 
 ## Requisitos
 
-- Node.js v16.9.0 o superior
-- FFmpeg instalado en el sistema
+- Node.js v20.18.1 o superior
+- FFmpeg instalado en el sistema (o el contenedor de Docker lo incluye)
 - Token de bot de Discord
 - ID de aplicación de Discord
 
@@ -38,8 +47,8 @@ Para añadir GordoDJ a tu servidor, haz clic en el siguiente enlace:
 
 1. Clona este repositorio:
    ```
-   git clone https://github.com/tuusuario/gordodj.git
-   cd gordodj
+   git clone https://github.com/santino-rosso/BotMusicaDiscord.git
+   cd BotMusicaDiscord
    ```
 
 2. Instala las dependencias:
@@ -47,52 +56,48 @@ Para añadir GordoDJ a tu servidor, haz clic en el siguiente enlace:
    npm install
    ```
 
-3. Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
+3. Crea un archivo `.env` en la raíz del proyecto:
    ```
    TOKEN=tu_token_de_discord
    CLIENT_ID=tu_id_de_aplicacion
    ```
 
-4. Registra los comandos slash:
-   ```
-   node deploy-commands.js
-   ```
-
-5. Inicia el bot:
+4. Inicia el bot:
    ```
    node index.js
    ```
 
-Para opciones avanzadas de hosting, consulta [HOSTING.md](HOSTING.md).
+Los comandos slash se registran automáticamente al arrancar (y se re-sincronizan cada 6 horas si cambian).
+
+### Docker
+
+```bash
+docker compose up -d --build
+```
+
+El contenedor incluye healthcheck real (heartbeat cada 30s), límites de memoria/CPU y rotación de logs.
 
 ## Configuración en Discord Developer Portal
 
 1. Ve a [Discord Developer Portal](https://discord.com/developers/applications)
 2. Crea una nueva aplicación o selecciona una existente
-3. Ve a la sección "Bot" y activa los siguientes Intents:
-   - MESSAGE CONTENT INTENT
-   - SERVER MEMBERS INTENT
-   - PRESENCE INTENT
-4. Genera un token de bot y guárdalo en tu archivo `.env`
-5. Ve a OAuth2 > URL Generator, selecciona los scopes "bot" y "applications.commands"
-6. Selecciona los permisos necesarios (al menos "Send Messages", "Connect", "Speak")
-7. Usa la URL generada para invitar al bot a tus servidores
+3. Ve a la sección "Bot" y genera un token (guardalo en `.env`)
+4. Ve a OAuth2 > URL Generator, selecciona los scopes "bot" y "applications.commands"
+5. Selecciona los permisos: View Channels, Send Messages, Embed Links, Read Message History, Connect, Speak
+6. Usa la URL generada para invitar al bot a tus servidores
 
-## Generar Enlace de Invitación
+> **Intents**: el bot solo necesita `Guilds`, `GuildMessages` y `GuildVoiceStates` (todos no-privilegiados). No hace falta habilitar Message Content, Server Members ni Presence en el portal.
 
-También puedes generar un enlace de invitación personalizado usando el script incluido:
+## Solución de problemas
 
-```bash
-node generate-invite.js
-```
-
-Este script generará un enlace con todos los permisos necesarios para que el bot funcione correctamente.
+- **"No se pudo reproducir"**: revisá los logs (`docker logs gordodj-bot`). Si aparece `Sign in to confirm you're not a bot`, YouTube está bloqueando la IP; el bot usa el cliente `android` de yt-dlp para evitarlo y, si es necesario, podés montar `cookies.txt` (formato Netscape) en la raíz del proyecto — el contenedor lo detecta automáticamente.
+- **El bot no responde**: verificá que esté `healthy` (`docker ps`) y que el token del `.env` sea válido.
 
 ## Dependencias
 
 - discord.js - Framework para interactuar con la API de Discord
 - distube - Reproductor de música para discord.js
-- @distube/yt-dlp - Plugin para mejorar la descarga de YouTube
+- @distube/yt-dlp - Plugin para extracción de YouTube
 - @distube/spotify - Plugin para soporte de Spotify
 - @distube/soundcloud - Plugin para soporte de SoundCloud
 - dotenv - Para manejar variables de entorno

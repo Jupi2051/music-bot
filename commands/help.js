@@ -12,7 +12,9 @@ module.exports = {
       '`/pause` - Pausa la canción actual',
       '`/resume` - Reanuda la canción pausada',
       '`/queue` - Muestra la lista de canciones en cola',
-      '`/volume [1-100]` - Cambia el volumen del bot'
+      '`/volume [1-100]` - Cambia el volumen del bot',
+      '`/leave` - Hace que el bot salga del canal de voz',
+      '`/help` - Muestra esta lista'
     ].join('\n');
 
     await interaction.reply({ 

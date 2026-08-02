@@ -7,7 +7,7 @@ module.exports = {
     .setDescription('Detiene la música y hace que el bot salga del canal de voz'),
   async execute(interaction, client) {
     const queue = client.distube.getQueue(interaction);
-    if (!queue) return interaction.reply({ content: '❌ No hay música en reproducción.', ephemeral: true });
+    if (!queue) return interaction.reply({ content: '❌ No hay música reproduciéndose.', ephemeral: true });
 
     const controlError = assertControl(interaction, queue.voiceChannel?.id);
     if (controlError) return interaction.reply(controlError);

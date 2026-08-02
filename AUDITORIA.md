@@ -244,10 +244,10 @@ Problemas:
 | F1.2 Cooldowns y límites | ✅ | `checkCooldown` 5s por guild+user en `/play`; `MAX_QUEUE_SIZE=100` con recorte en addSong/addList (DisTube v5 no tiene maxQueueSize nativo) |
 | F1.3 EscapeMarkdown | ✅ | `escapeMarkdown` en playSong/addSong/addList/searchNoResult/queue/play; error genérico en play.js (sin filtrar `error.message`) |
 | F2.1 Node 22 + lock + chown/yt-dlp | ✅ | Dockerfile `node:22-bookworm-slim`, `--omit=dev`, chown DESPUÉS de npm ci (yt-dlp puede auto-update); engines `>=20.18.1`; lock sincronizado. **Lección**: @discordjs/opus 0.10.0 NO tiene prebuild para Node 22 (ABI 127) → python3+build-essential son NECESARIOS para compilar desde source (el build de Docker lo confirmó) |
-| F2.2 Healthcheck real + límites + logs | ✅ | Heartbeat en index.js (bot-state.json cada 30s: lastUpdate/wsPing/guildCount); healthcheck.js verifica edad ≤90s; compose con `mem_limit: 1g`/`cpus: 1.0` reales, healthcheck real y rotación de logs (10m x 3). Verificado: build Docker OK, contenedor falla limpio con token inválido, health=unhealthy detectado |
+| F2.2 Healthcheck real + límites + logs | ✅ | Heartbeat en index.js (bot-state.json cada 30s: lastUpdate/wsPing/guildCount); healthcheck.js verifica edad ≤90s; compose con `mem_limit: 1g`/`cpus: 1.0` reales, healthcheck real y rotación de logs (10m x 3). Verificado: build Docker OK, contenedor falla limpio con token inválido, health=unhealthy detectado. **Prueba en vivo 2026-08-02**: healthy, 9 comandos registrados en API |
 | F2.3 Huérfanos + volúmenes | ✅ | Borrados `run-forever.js` y `ecosystem.config.json`; compose sin volumes muertos ni red custom; `start-vm.sh` sin mkdir data/logs |
 | F2.4 Audit de dependencias | ⬜ | 18 vulns (2 críticas: form-data, tar; 13 altas). `npm audit fix` no resolvió nada: requiere actualizar discord.js/distube (breaking) — DECISIÓN DEL USUARIO pendiente |
-| F3.1 Deploy unificado + estado fuera de git | ⬜ | |
-| F3.2 Permisos + intents + docs | ⬜ | |
+| F3.1 Deploy unificado + estado fuera de git | ✅ | `update-commands.js`: estado se guarda SOLO después de deploy exitoso (antes se guardaba primero y un deploy fallido nunca se reintentaba); `commands-state.json` + `bot-state.json` fuera de git; B3 resuelto (todos usan `getQueue(interaction)`) |
+| F3.2 Permisos + intents + docs | ✅ | `generate-invite.js`: permisos reales (View Channels 1024, sin Mute Members, comentarios corregidos); `MessageContent` eliminado de index.js (intent no-privilegiado sobrante); help.js con /leave y /help; README reescrito (repo, Node 20.18+, intents reales, deploy automático); B4: mensajes unificados |
 | F4.1 Estrategia de testing | ⬜ | |
 | F5.1 Sharding/Redis/audio separado | ⬜ | |

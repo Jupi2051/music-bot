@@ -45,8 +45,10 @@ async function checkAndUpdateCommands() {
       .update(currentCommandsJSON)
       .digest('hex');
     
-    // Guardar el nuevo estado
-    fs.writeFileSync(stateFilePath, JSON.stringify({ 
+    // Guardar el estado SOLO si no hay cambios (timestamp se actualiza igual)
+    // o DESPUÉS de un deploy exitoso (ver abajo). Si el deploy falla, el hash
+    // viejo queda en el archivo y el reintento ocurre en el próximo arranque.
+    const saveState = () => fs.writeFileSync(stateFilePath, JSON.stringify({ 
       hash: currentCommandsHash,
       timestamp: new Date().toISOString(),
       count: commands.length
@@ -54,6 +56,7 @@ async function checkAndUpdateCommands() {
     
     // Si no hay cambios, salir
     if (previousCommandsHash === currentCommandsHash) {
+      saveState();
       console.log('✅ No hay cambios en los comandos. No es necesario actualizar.');
       return false;
     }
@@ -68,6 +71,8 @@ async function checkAndUpdateCommands() {
       { body: commands }
     );
     
+    // Guardar el nuevo estado SOLO después del deploy exitoso
+    saveState();
     console.log('✅ Comandos actualizados exitosamente.');
     return true;
   } catch (error) {

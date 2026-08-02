@@ -7,7 +7,7 @@ module.exports = {
     .setDescription('Salta a la siguiente canción'),
   async execute(interaction, client) {
     const queue = client.distube.getQueue(interaction);
-    if (!queue) return interaction.reply('❌ No hay música en reproducción.');
+    if (!queue) return interaction.reply('❌ No hay música reproduciéndose.');
 
     const controlError = assertControl(interaction, queue.voiceChannel?.id);
     if (controlError) return interaction.reply(controlError);
