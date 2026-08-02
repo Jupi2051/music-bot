@@ -18,24 +18,29 @@ module.exports = (client) => {
   client.distube = distube;
 
   // Eventos de distube
+  const sendToChannel = (channel, message) => {
+    if (!channel) return;
+    channel.send(message).catch(err => console.error('Error al enviar mensaje al canal:', err));
+  };
+
   distube
     .on('playSong', (queue, song) => {
-      queue.textChannel.send(`🎵 Reproduciendo: **${song.name}** [\`${song.formattedDuration}\`]`);
+      sendToChannel(queue?.textChannel, `🎵 Reproduciendo: **${song.name}** [\`${song.formattedDuration}\`]`);
     })
     .on('addSong', (queue, song) => {
-      queue.textChannel.send(`➕ Añadido: **${song.name}**`);
+      sendToChannel(queue?.textChannel, `➕ Añadido: **${song.name}**`);
     })
     .on('addList', (queue, playlist) => {
-      queue.textChannel.send(`📃 Lista añadida: **${playlist.name}** con ${playlist.songs.length} canciones.`);
+      sendToChannel(queue?.textChannel, `📃 Lista añadida: **${playlist.name}** con ${playlist.songs.length} canciones.`);
     })
-    .on('error', (channel, error) => {
-      console.error(error);
-      channel.send('❌ Error al reproducir música.');
+    .on('error', (error, queue) => {
+      console.error('Error de reproducción:', error);
+      sendToChannel(queue?.textChannel, '❌ Error al reproducir música.');
     })
-    .on('finish', queue => queue.textChannel.send('✅ Reproducción terminada.'))
-    .on('empty', queue => queue.textChannel.send('📭 Canal de voz vacío, saliendo...'))
-    .on('disconnect', queue => queue.textChannel.send('👋 Me desconecté del canal.'))
+    .on('finish', queue => sendToChannel(queue?.textChannel, '✅ Reproducción terminada.'))
+    .on('empty', queue => sendToChannel(queue?.textChannel, '📭 Canal de voz vacío, saliendo...'))
+    .on('disconnect', queue => sendToChannel(queue?.textChannel, '👋 Me desconecté del canal.'))
     .on('searchNoResult', (message, query) => {
-      message.channel.send(`❌ No se encontraron resultados para \`${query}\``);
+      sendToChannel(message?.channel, `❌ No se encontraron resultados para \`${query}\``);
     });
 };

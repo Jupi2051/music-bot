@@ -1,4 +1,10 @@
 require('dotenv').config();
+
+if (!process.env.TOKEN) {
+  console.error('❌ Falta la variable de entorno TOKEN. Configurá el archivo .env (ver .env.example).');
+  process.exit(1);
+}
+
 const { Client, Collection, GatewayIntentBits, ActivityType } = require('discord.js');
 const { DisTube } = require('distube');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
@@ -18,6 +24,20 @@ const client = new Client({
 });
 
 client.commands = new Collection();
+
+// Manejo global de errores para evitar crashes silenciosos
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  process.exit(1); // PM2/Docker reinician el proceso
+});
+
+client.on('error', (err) => {
+  console.error('Error del cliente Discord:', err);
+});
 
 // Cargar comandos
 const commandsPath = path.join(__dirname, 'commands');
@@ -60,4 +80,7 @@ client.on('ready', async () => {
   }, 6 * 60 * 60 * 1000);
 });
 
-client.login(process.env.TOKEN);
+client.login(process.env.TOKEN).catch((err) => {
+  console.error('❌ No se pudo conectar con Discord:', err.message);
+  process.exit(1);
+});

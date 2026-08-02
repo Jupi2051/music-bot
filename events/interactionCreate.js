@@ -9,8 +9,13 @@ module.exports = {
     try {
       await command.execute(interaction, client);
     } catch (error) {
-      console.error(error);
-      await interaction.reply({ content: '❌ Ocurrió un error.', flags: 64 });
+      console.error(`Error en el comando ${interaction.commandName}:`, error);
+      const content = '❌ Ocurrió un error.';
+      if (interaction.replied || interaction.deferred) {
+        await interaction.editReply({ content }).catch(() => {});
+      } else {
+        await interaction.reply({ content, ephemeral: true }).catch(() => {});
+      }
     }
   },
 };
