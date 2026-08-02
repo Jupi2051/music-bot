@@ -249,5 +249,5 @@ Problemas:
 | F2.4 Audit de dependencias | ✅ | 0 vulnerabilidades (antes 18). `npm audit fix`: undici 6.21.3 → 6.28.0 (plugins distube). `overrides: tar ^7.5.21` elimina la cadena crítica tar←node-pre-gyp←opus (build-time); verificado con build Docker + carga de opus |
 | F3.1 Deploy unificado + estado fuera de git | ✅ | `update-commands.js`: estado se guarda SOLO después de deploy exitoso (antes se guardaba primero y un deploy fallido nunca se reintentaba); `commands-state.json` + `bot-state.json` fuera de git; B3 resuelto (todos usan `getQueue(interaction)`) |
 | F3.2 Permisos + intents + docs | ✅ | `generate-invite.js`: permisos reales (View Channels 1024, sin Mute Members, comentarios corregidos); `MessageContent` eliminado de index.js (intent no-privilegiado sobrante); help.js con /leave y /help; README reescrito (repo, Node 20.18+, intents reales, deploy automático); B4: mensajes unificados |
-| F4.1 Estrategia de testing | ⬜ | |
+| F4.1 Estrategia de testing | ✅ | `node:test` (sin dependencias): 56 tests en `test/` (helpers 7, comandos 31, update-commands 5 con orden hash-vs-deploy, distube-events 12). `npm test` = `node --test "test/*.test.js"` (Node 22.14 no acepta directorio como arg). Faltan: red real de Discord (integración opt-in) e interactionCreate/ready |
 | F5.1 Sharding/Redis/audio separado | ⬜ | |
