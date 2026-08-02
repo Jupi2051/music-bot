@@ -1,11 +1,13 @@
 FROM node:22-bookworm-slim
 
-# Dependencias del sistema: ffmpeg (transcodificación de audio) y toolchain de
-# compilación (build-essential + python3) para @discordjs/opus: no hay prebuild
-# para Node 22 (ABI 127), así que node-gyp compila desde source
+# Dependencias del sistema: ffmpeg (transcodificación de audio), ca-certificates
+# (imprescindible para que yt-dlp valide SSL contra YouTube — las imágenes slim no
+# lo traen) y toolchain de compilación (build-essential + python3) para
+# @discordjs/opus: no hay prebuild para Node 22 (ABI 127), node-gyp compila source
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ffmpeg \
+    ca-certificates \
     build-essential \
     python3 \
     && apt-get clean \
@@ -33,6 +35,10 @@ USER nodejs
 # Copiar el código fuente
 COPY --chown=nodejs:nodejs . .
 
+# Entrypoint: arma el config de yt-dlp (js runtime + cookies si existen).
+# El chmod corre como nodejs pero el archivo es suyo (--chown arriba).
+RUN chmod +x /app/entrypoint.sh
+
 # Variables de entorno por defecto
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=512"
@@ -42,4 +48,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD node healthcheck.js || exit 1
 
 # Comando para iniciar el bot
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "index.js"]

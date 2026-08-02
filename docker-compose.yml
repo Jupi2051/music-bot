@@ -7,6 +7,10 @@ services:
       - NODE_ENV=production
     env_file:
       - .env
+    volumes:
+      # Cookies de YouTube (opcional): exportadas por el admin para evitar el
+      # bot-check de YouTube. Archivo ignorado por git (secreto).
+      - ./cookies.txt:/app/cookies.txt:ro
     mem_limit: 1g
     cpus: 1.0
     healthcheck:
