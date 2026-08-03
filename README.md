@@ -1,80 +1,71 @@
-# GordoDJ - Bot de Música para Discord
+# GordoDJ - Discord Music Bot
 
-Un bot de música para Discord que te permite reproducir música de YouTube, Spotify, SoundCloud y más directamente en tus canales de voz.
+[Español](README.es.md) · **English**
 
-## Invitar al Bot
+A Discord music bot that plays music from YouTube, Spotify and SoundCloud directly in your voice channels.
 
-Para añadir GordoDJ a tu servidor, haz clic en el siguiente enlace:
+## Features
 
-[**Invitar GordoDJ a tu servidor**](https://discord.com/api/oauth2/authorize?client_id=1376190250120122452&permissions=1024+2048+16384+65536+1048576+2097152&scope=bot%20applications.commands)
+- Music from multiple sources (YouTube, Spotify, SoundCloud)
+- Playback control commands (play, pause, resume, skip, stop)
+- Volume control
+- Playback queue with a 100-song limit
+- Playlist support (playlists are capped at 15 songs to avoid hanging on infinite radio lists)
+- Access control: only users in the same voice channel as the bot can control it
+- 5s per-user cooldown on `/play` to prevent abuse
+- Validation errors are ephemeral (only the requesting user sees them)
 
-También puedes regenerar el enlace en cualquier momento:
+## Commands
 
-```bash
-node generate-invite.js
-```
+- `/play [song]` - Plays a song or playlist (URL or text search)
+- `/stop` - Stops playback and leaves the voice channel
+- `/skip` - Skips to the next song
+- `/pause` - Pauses the current song
+- `/resume` - Resumes the paused song
+- `/queue` - Shows the songs in the queue
+- `/volume [1-100]` - Changes the bot volume
+- `/leave` - Makes the bot leave the voice channel
+- `/help` - Shows the available commands
 
-## Características
+## Requirements
 
-- Reproducción de música desde múltiples fuentes (YouTube, Spotify, SoundCloud)
-- Comandos de control de reproducción (play, pause, resume, skip, stop)
-- Control de volumen
-- Cola de reproducción con límite de 100 canciones
-- Soporte para playlists
-- Control de acceso: solo quien está en el mismo canal de voz controla el bot
-- Cooldown de 5s por usuario en `/play` para evitar abuso
+- Node.js v20.18.1 or higher
+- FFmpeg installed on the system (the Docker container includes it)
+- Discord bot token
+- Discord application ID
 
-## Comandos
+## Installation
 
-- `/play [cancion]` - Reproduce una canción o playlist
-- `/stop` - Detiene la música y el bot sale del canal de voz
-- `/skip` - Salta a la siguiente canción
-- `/pause` - Pausa la canción actual
-- `/resume` - Reanuda la canción pausada
-- `/queue` - Muestra la lista de canciones en cola
-- `/volume [1-100]` - Cambia el volumen del bot
-- `/leave` - Hace que el bot salga del canal de voz
-- `/help` - Muestra la lista de comandos disponibles
-
-## Requisitos
-
-- Node.js v20.18.1 o superior
-- FFmpeg instalado en el sistema (o el contenedor de Docker lo incluye)
-- Token de bot de Discord
-- ID de aplicación de Discord
-
-## Instalación
-
-1. Clona este repositorio:
+1. Clone this repository:
    ```
    git clone https://github.com/santino-rosso/BotMusicaDiscord.git
    cd BotMusicaDiscord
    ```
 
-2. Instala las dependencias:
+2. Install dependencies:
    ```
    npm install
    ```
 
-3. Crea un archivo `.env` en la raíz del proyecto:
+3. Create a `.env` file in the project root:
    ```
-   TOKEN=tu_token_de_discord
-   CLIENT_ID=tu_id_de_aplicacion
+   TOKEN=your_discord_token
+   CLIENT_ID=your_application_id
    ```
 
-4. (Opcional) Para reproducción completa de playlists y álbumes de Spotify, creá una app en [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) y agregá las credenciales al `.env`:
+4. (Optional) For full Spotify playlist/album support, create an app in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and add the credentials to `.env`:
    ```
-   SPOTIFY_CLIENT_ID=tu_spotify_client_id
-   SPOTIFY_CLIENT_SECRET=tu_spotify_client_secret
+   SPOTIFY_CLIENT_ID=your_spotify_client_id
+   SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
    ```
-   Sin ellas, Spotify funciona a medias (solo canciones individuales). El audio siempre se reproduce desde YouTube; las credenciales solo habilitan la resolución de listas completas.
+   Without them, Spotify works partially (individual tracks only). Audio is always streamed from YouTube; the credentials only enable full list resolution.
 
-5. Inicia el bot:
+5. Start the bot:
    ```
    node index.js
    ```
 
-Los comandos slash se registran automáticamente al arrancar (y se re-sincronizan cada 6 horas si cambian).
+Slash commands are registered automatically on startup (and re-synced every 6 hours if they change).
 
 ### Docker
 
@@ -82,54 +73,54 @@ Los comandos slash se registran automáticamente al arrancar (y se re-sincroniza
 docker compose up -d --build
 ```
 
-El contenedor incluye healthcheck real (heartbeat cada 30s), límites de memoria/CPU y rotación de logs.
+The container includes a real healthcheck (heartbeat every 30s), memory/CPU limits and log rotation.
 
-## Configuración en Discord Developer Portal
+## Discord Developer Portal setup
 
-1. Ve a [Discord Developer Portal](https://discord.com/developers/applications)
-2. Crea una nueva aplicación o selecciona una existente
-3. Ve a la sección "Bot" y genera un token (guardalo en `.env`)
-4. Ve a OAuth2 > URL Generator, selecciona los scopes "bot" y "applications.commands"
-5. Selecciona los permisos: View Channels, Send Messages, Embed Links, Read Message History, Connect, Speak
-6. Usa la URL generada para invitar al bot a tus servidores
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create a new application or select an existing one
+3. Go to the "Bot" section and generate a token (store it in `.env`)
+4. Go to OAuth2 > URL Generator, select the "bot" and "applications.commands" scopes
+5. Select the permissions: View Channels, Send Messages, Embed Links, Read Message History, Connect, Speak
+6. Use the generated URL to invite the bot to your servers
 
-> **Intents**: el bot solo necesita `Guilds`, `GuildMessages` y `GuildVoiceStates` (todos no-privilegiados). No hace falta habilitar Message Content, Server Members ni Presence en el portal.
+> **Intents**: the bot only needs `Guilds`, `GuildMessages` and `GuildVoiceStates` (all non-privileged). You do not need Message Content, Server Members or Presence in the portal.
 
-## Solución de problemas
+## Troubleshooting
 
-- **"No se pudo reproducir"**: revisá los logs (`docker logs gordodj-bot`). Si aparece `Sign in to confirm you're not a bot`, YouTube está bloqueando la IP; el bot usa el cliente `android` de yt-dlp para evitarlo y, si es necesario, podés montar `cookies.txt` (formato Netscape) en la raíz del proyecto — el contenedor lo detecta automáticamente.
-- **El bot no responde**: verificá que esté `healthy` (`docker ps`) y que el token del `.env` sea válido.
+- **"Could not play"**: check the logs (`docker logs gordodj-bot`). If you see `Sign in to confirm you're not a bot`, YouTube is blocking the IP; the bot uses the yt-dlp `android` client to avoid it and, if needed, you can mount a `cookies.txt` (Netscape format) in the project root — the container detects it automatically.
+- **The bot does not respond**: verify it is `healthy` (`docker ps`) and that the `.env` token is valid.
 
-## Dependencias
+## Dependencies
 
-- discord.js - Framework para interactuar con la API de Discord
-- distube - Reproductor de música para discord.js
-- @distube/yt-dlp - Plugin para extracción de YouTube
-- @distube/spotify - Plugin para soporte de Spotify
-- @distube/soundcloud - Plugin para soporte de SoundCloud
-- dotenv - Para manejar variables de entorno
+- discord.js - Framework for interacting with the Discord API
+- distube - Music player for discord.js
+- @distube/yt-dlp - YouTube extraction plugin
+- @distube/spotify - Spotify support plugin
+- @distube/soundcloud - SoundCloud support plugin
+- dotenv - Environment variables management
 
 ## Testing
 
 ```bash
-npm test                  # Unit tests (node:test, sin red ni dependencias extra)
-npm run test:integration  # Opt-in: red real contra YouTube (requiere binario yt-dlp local)
+npm test                  # Unit tests (node:test, no network or extra dependencies)
+npm run test:integration  # Opt-in: real network against YouTube (requires local yt-dlp binary)
 ```
 
-Los tests de integración (`test/integration/`) quedan skipped en `npm test`; cubren la resolución de videos individuales y de radios RD acotadas (`--playlist-end 15`).
+Integration tests (`test/integration/`) are skipped in `npm test`; they cover individual video resolution and bounded RD radio lists (`--playlist-end 15`).
 
-## Mejoras futuras
+## Future improvements
 
-- **Escalado a cientos/miles de servidores**: sharding (una instancia por shard) + Redis para estado compartido + servicio de audio separado (Lavalink) + cookies/proxies rotativos para yt-dlp. El código ya está preparado (estado de colas aislado por guild en DisTube, sin estado global frágil); aplicar cuando el bot alcance ~100+ servidores o se acerque al límite práctico de guilds de discord.js (~2.500).
+- **Scaling to hundreds/thousands of servers**: sharding (one instance per shard) + Redis for shared state + a separate audio service (Lavalink) + rotating cookies/proxies for yt-dlp. The code is already prepared (guild-isolated queue state in DisTube, no fragile global state); apply when the bot reaches ~100+ servers or approaches the practical discord.js guild limit (~2,500).
 
-## Contribuir
+## Contributing
 
-¿Querés sumar? Leé [CONTRIBUTING.md](CONTRIBUTING.md) — reglas de oro: nunca commitees secretos, siempre con tests, commits convencionales.
+Want to contribute? Read [CONTRIBUTING.md](CONTRIBUTING.md) — golden rules: never commit secrets, always with tests, conventional commits.
 
-## Licencia
+## License
 
 [MIT](LICENSE)
 
-## Autor
+## Author
 
 [Santino Rosso](https://github.com/santino-rosso)

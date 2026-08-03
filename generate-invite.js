@@ -1,5 +1,12 @@
 require('dotenv').config();
-const CLIENT_ID = process.env.CLIENT_ID || '1376190250120122452';
+
+// En open source cada quien usa su propia aplicación: CLIENT_ID es obligatorio
+// (está en el .env). Sin él no hay forma de armar un link válido.
+if (!process.env.CLIENT_ID) {
+  console.error('❌ Falta CLIENT_ID en el .env. Configurá tu propia app de Discord (ver README).');
+  process.exit(1);
+}
+const CLIENT_ID = process.env.CLIENT_ID;
 
 // Permisos necesarios para el bot de música (slash commands van por el scope
 // applications.commands, no por el permiso):
