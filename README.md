@@ -62,7 +62,14 @@ node generate-invite.js
    CLIENT_ID=tu_id_de_aplicacion
    ```
 
-4. Inicia el bot:
+4. (Opcional) Para reproducción completa de playlists y álbumes de Spotify, creá una app en [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) y agregá las credenciales al `.env`:
+   ```
+   SPOTIFY_CLIENT_ID=tu_spotify_client_id
+   SPOTIFY_CLIENT_SECRET=tu_spotify_client_secret
+   ```
+   Sin ellas, Spotify funciona a medias (solo canciones individuales). El audio siempre se reproduce desde YouTube; las credenciales solo habilitan la resolución de listas completas.
+
+5. Inicia el bot:
    ```
    node index.js
    ```
