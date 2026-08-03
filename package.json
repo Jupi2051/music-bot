@@ -37,12 +37,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tuusuario/gordodj.git"
+    "url": "git+https://github.com/santino-rosso/BotMusicaDiscord.git"
   },
   "bugs": {
-    "url": "https://github.com/tuusuario/gordodj/issues"
+    "url": "https://github.com/santino-rosso/BotMusicaDiscord/issues"
   },
-  "homepage": "https://github.com/tuusuario/gordodj#readme",
+  "homepage": "https://github.com/santino-rosso/BotMusicaDiscord#readme",
   "devDependencies": {
     "patch-package": "^8.0.1"
   }
