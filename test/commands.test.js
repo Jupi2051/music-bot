@@ -409,6 +409,19 @@ describe('play', () => {
     assert.equal(voiceChannel, interaction.member.voice.channel);
   });
 
+  test('muestra mensaje de carga de playlist para URLs de playlist', async () => {
+    const interaction = makeInteraction({
+      guildId: 'guild-play-playlist',
+      options: { getString: () => 'https://www.youtube.com/playlist?list=PLabc123' },
+    });
+    const client = makeClient();
+    await play.execute(interaction, client);
+    assert.ok(replyArg(interaction).includes('📃 Cargando playlist:'));
+    assert.ok(replyArg(interaction).includes('PLabc123'));
+    const [, query] = client.distube.play.mock.calls[0].arguments;
+    assert.equal(query, 'https://www.youtube.com/playlist?list=PLabc123');
+  });
+
   test('limpia backticks envolventes de un query sin URL', async () => {
     const interaction = makeInteraction({
       guildId: 'guild-play-backticks',

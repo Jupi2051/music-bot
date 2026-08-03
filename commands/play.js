@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, escapeMarkdown } = require('discord.js');
-const { MAX_QUEUE_SIZE, checkCooldown, cleanQuery } = require('../utils/helpers');
+const { MAX_QUEUE_SIZE, checkCooldown, cleanQuery, isPlaylistUrl } = require('../utils/helpers');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -27,7 +27,15 @@ module.exports = {
       return interaction.reply({ content: `❌ La cola está llena (máximo ${MAX_QUEUE_SIZE} canciones).`, ephemeral: true });
     }
 
-    await interaction.reply(`🔍 Buscando: \`${escapeMarkdown(query)}\``);
+    // Las playlists/álbumes tardan en resolverse canción por canción
+    // (yt-dlp extrae secuencialmente; probado: ~1.5s por canción). Mostrar
+    // "cargando playlist" en vez de "buscando" para que no parezca colgado.
+    const isPlaylist = isPlaylistUrl(query);
+    await interaction.reply(
+      isPlaylist
+        ? `📃 Cargando playlist: \`${escapeMarkdown(query)}\`. Lleva unos segundos...`
+        : `🔍 Buscando: \`${escapeMarkdown(query)}\``
+    );
     try {
       await client.distube.play(voiceChannel, query, {
         textChannel: interaction.channel,

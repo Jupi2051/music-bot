@@ -46,4 +46,12 @@ function cleanQuery(raw) {
   return text;
 }
 
-module.exports = { MAX_QUEUE_SIZE, checkCooldown, assertControl, cleanQuery };
+// Detecta si una query es una URL de playlist/álbum/radio (YouTube, Spotify,
+// SoundCloud) para mostrar el mensaje de carga adecuado. El set es explícito:
+// agregar una fuente nueva acá actualiza tanto este check como la UX.
+function isPlaylistUrl(raw) {
+  if (typeof raw !== 'string') return false;
+  return /(youtube\.com|youtu\.be).*(playlist|list=)|open\.spotify\.com\/(playlist|album)|soundcloud\.com\/[^/]+\/sets\//.test(raw);
+}
+
+module.exports = { MAX_QUEUE_SIZE, checkCooldown, assertControl, cleanQuery, isPlaylistUrl };

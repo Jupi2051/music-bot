@@ -13,8 +13,9 @@ echo "--js-runtimes node" > /home/nodejs/.config/yt-dlp/config
 echo "--extractor-args youtube:player_client=android" >> /home/nodejs/.config/yt-dlp/config
 # Límite de playlists: las radios (list=RD...) son listas virtuales ilimitadas y
 # sin este límite la extracción nunca termina (bot colgado en "🔍 Buscando:").
-# 25 canciones máximas por playlist/radio (probado 2026-08, ~42s).
-echo "--playlist-end 25" >> /home/nodejs/.config/yt-dlp/config
+# 15 canciones máximas por playlist/radio (probado 2026-08, ~25s con el
+# extractor secuencial de yt-dlp).
+echo "--playlist-end 15" >> /home/nodejs/.config/yt-dlp/config
 
 # Solo archivo regular y no vacío: en un deploy fresco sin cookies.txt, Docker
 # monta un DIRECTORIO en /app/cookies.txt y `test -s` pasa contra directorios

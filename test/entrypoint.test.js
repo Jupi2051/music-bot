@@ -21,8 +21,8 @@ test('entrypoint.sh usa player_client=android para evadir el bot-check', () => {
   assert.match(source, /--extractor-args youtube:player_client=android/);
 });
 
-test('entrypoint.sh limita playlists a 25 canciones (fix radios RD)', () => {
-  assert.match(source, /--playlist-end 25/);
+test('entrypoint.sh limita playlists a 15 canciones (fix radios RD)', () => {
+  assert.match(source, /--playlist-end 15/);
 });
 
 test('entrypoint.sh activa cookies solo si es un archivo regular no vacío', () => {

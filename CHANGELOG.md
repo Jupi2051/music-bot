@@ -2,6 +2,12 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+## [1.2.1] - 2026-08-02
+
+### Cambiado
+- `/play` muestra "📃 Cargando playlist..." para URLs de playlist/álbum/radio (YouTube, Spotify, SoundCloud) en vez del "🔍 Buscando:" genérico, para que la espera de resolución no parezca un cuelgue
+- Límite de canciones por playlist/radio de 25 a 15 (la extracción de yt-dlp es secuencial: ~1.5s por canción; una playlist de 25 tardaba ~42s)
+
 ## [1.2.0] - 2026-08-02
 
 ### Añadido
