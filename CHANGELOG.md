@@ -2,6 +2,14 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+## [1.2.0] - 2026-08-02
+
+### Añadido
+- Credenciales de Spotify Developer (SPOTIFY_CLIENT_ID/SPOTIFY_CLIENT_SECRET) para reproducción completa de playlists y álbumes vía la API oficial de Spotify
+
+### Cambiado
+- SpotifyPlugin usa la API oficial cuando hay credenciales en `.env`; sin ellas conserva el comportamiento anterior (solo metadata básica)
+
 ## [1.1.0] - 2026-08-02
 
 ### Añadido

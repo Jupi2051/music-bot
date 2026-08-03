@@ -10,7 +10,15 @@ module.exports = (client) => {
     emitNewSongOnly: true,
     nsfw: false, // No permitir contenido para adultos
     plugins: [
-      new SpotifyPlugin(),
+      // Spotify: con SPOTIFY_CLIENT_ID/SPOTIFY_CLIENT_SECRET en .env usa la API
+      // oficial (playlists/álbumes completos). Sin credenciales funciona a
+      // medias (solo metadata básica y puede fallar en listas largas).
+      new SpotifyPlugin({
+        api: {
+          clientId: process.env.SPOTIFY_CLIENT_ID,
+          clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+        },
+      }),
       new SoundCloudPlugin(),
       new YtDlpPlugin()
     ],
