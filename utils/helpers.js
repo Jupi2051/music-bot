@@ -54,4 +54,15 @@ function isPlaylistUrl(raw) {
   return /(youtube\.com|youtu\.be).*(playlist|list=)|open\.spotify\.com\/(playlist|album)|soundcloud\.com\/[^/]+\/sets\//.test(raw);
 }
 
-module.exports = { MAX_QUEUE_SIZE, checkCooldown, assertControl, cleanQuery, isPlaylistUrl };
+// Devuelve un mensaje de error si el query es inseguro (null si es seguro).
+// Seguridad: bloquea inyección de flags de yt-dlp (queries que empiezan con "-")
+// y protocolos no-http(s) (LFI vía file://).
+function getQueryError(query) {
+  if (typeof query !== 'string' || !query.trim()) return '❌ Ingresá un nombre o URL.';
+  if (query.startsWith('-')) return '❌ Ese término de búsqueda no es válido.';
+  const protocolMatch = query.match(/^[a-z][a-z0-9+.-]*:\/\//i);
+  if (protocolMatch && !/^https?:\/\//i.test(query)) return '❌ Solo se admiten enlaces http(s).';
+  return null;
+}
+
+module.exports = { MAX_QUEUE_SIZE, checkCooldown, assertControl, cleanQuery, isPlaylistUrl, getQueryError };

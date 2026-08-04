@@ -2,6 +2,11 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+## [Unreleased] — Seguridad
+
+- Hardening anti-RCE: se bloquean queries que empiezan con `-` (inyección de flags de yt-dlp) y protocolos no-http(s) (`file://` → LFI).
+- El binario de yt-dlp ya no se auto-actualiza en runtime: se descarga en build-time y node_modules queda inmutable en el contenedor.
+
 ## [1.2.1] - 2026-08-02
 
 ### Cambiado

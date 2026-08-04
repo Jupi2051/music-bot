@@ -445,6 +445,32 @@ describe('play', () => {
     const arg = interaction.editReply.mock.calls[0].arguments[0];
     assert.equal(arg, '❌ No se pudo reproducir. Probá con otro nombre o URL.');
   });
+
+  test('bloquea query con flag de yt-dlp sin llamar a distube.play', async () => {
+    const interaction = makeInteraction({
+      guildId: 'guild-play-flag',
+      options: { getString: () => '--update-to=attacker/repo@tag' },
+    });
+    const client = makeClient();
+    await play.execute(interaction, client);
+    const arg = replyArg(interaction);
+    assert.equal(arg.content, '❌ Ese término de búsqueda no es válido.');
+    assert.equal(arg.ephemeral, true);
+    assert.equal(client.distube.play.mock.calls.length, 0);
+  });
+
+  test('bloquea query file:// (LFI) sin llamar a distube.play', async () => {
+    const interaction = makeInteraction({
+      guildId: 'guild-play-file',
+      options: { getString: () => 'file:///etc/passwd' },
+    });
+    const client = makeClient();
+    await play.execute(interaction, client);
+    const arg = replyArg(interaction);
+    assert.equal(arg.content, '❌ Solo se admiten enlaces http(s).');
+    assert.equal(arg.ephemeral, true);
+    assert.equal(client.distube.play.mock.calls.length, 0);
+  });
 });
 
 describe('help', () => {

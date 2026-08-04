@@ -28,9 +28,15 @@ COPY patches/ ./patches/
 # (fix del bug de JSON.parse en @distube/yt-dlp), y luego se podan las devDeps.
 RUN npm ci && npx patch-package && npm prune --omit=dev && npm cache clean --force
 
-# Fijar ownership DESPUÉS del npm ci: node_modules debe pertenecer al usuario
-# no-root para que yt-dlp pueda auto-actualizarse en runtime
-RUN chown -R nodejs:nodejs /app
+# Descargar el binario de yt-dlp en build-time (root). Con update:false en
+# config/distube.js el runtime NO puede sobrescribirlo → si un ataque lograra
+# inyectar flags (--update-to), no habría binario reemplazable = sin RCE.
+RUN node -e "require('@distube/yt-dlp').download().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1); })"
+
+# Fijar ownership DESPUÉS del npm ci y de la descarga del binario. SOLO la
+# raíz de /app es escribible (bot-state.json): node_modules queda root-owned
+# y el binario de yt-dlp es inmutable en runtime (nada de auto-updates).
+RUN chown nodejs:nodejs /app
 
 # Cambiar a usuario no-root
 USER nodejs

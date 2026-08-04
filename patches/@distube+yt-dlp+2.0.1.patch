@@ -1,8 +1,14 @@
 diff --git a/node_modules/@distube/yt-dlp/dist/index.js b/node_modules/@distube/yt-dlp/dist/index.js
-index b17b126..ad47539 100644
+index b17b126..3fd7f30 100644
 --- a/node_modules/@distube/yt-dlp/dist/index.js
 +++ b/node_modules/@distube/yt-dlp/dist/index.js
-@@ -74,15 +74,16 @@ var json = /* @__PURE__ */ __name((url, flags, options) => {
+@@ -71,18 +71,22 @@ Status code ${response.statusCode.toString()}`);
+ }, "makeRequest");
+ var args = /* @__PURE__ */ __name((url, flags = {}) => [url].concat((0, import_dargs.default)(flags, { useEquals: false })).filter(Boolean), "args");
+ var json = /* @__PURE__ */ __name((url, flags, options) => {
++  if (typeof url === "string" && url.startsWith("-")) {
++    return Promise.reject(new Error(`Invalid URL: ${url}`));
++  }
    const process2 = (0, import_node_child_process.spawn)(YTDLP_PATH, args(url, flags), options);
    return new Promise((resolve, reject) => {
      let output = "";

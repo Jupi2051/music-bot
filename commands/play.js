@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, escapeMarkdown } = require('discord.js');
-const { MAX_QUEUE_SIZE, checkCooldown, cleanQuery, isPlaylistUrl } = require('../utils/helpers');
+const { MAX_QUEUE_SIZE, checkCooldown, cleanQuery, getQueryError, isPlaylistUrl } = require('../utils/helpers');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -12,6 +12,10 @@ module.exports = {
     ),
   async execute(interaction, client) {
     const query = cleanQuery(interaction.options.getString('cancion'));
+    // Hardening anti-RCE: bloquear queries que empiecen con "-" (inyección de
+    // flags de yt-dlp) o usen protocolos no-http(s) (LFI vía file://).
+    const queryError = getQueryError(query);
+    if (queryError) return interaction.reply({ content: queryError, ephemeral: true });
     const voiceChannel = interaction.member?.voice?.channel;
     // En DMs `interaction.member` es null; dar mensaje claro en vez de TypeError
     if (!interaction.member) return interaction.reply({ content: '❌ Este comando solo funciona en servidores.', ephemeral: true });

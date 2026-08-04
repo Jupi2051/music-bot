@@ -20,7 +20,10 @@ module.exports = (client) => {
         },
       }),
       new SoundCloudPlugin(),
-      new YtDlpPlugin()
+      // update:false: el binario de yt-dlp se descarga en build-time del
+      // Dockerfile (o ya existe localmente). El auto-update en runtime
+      // permitía sobrescribir el binario (riesgo de RCE persistente).
+      new YtDlpPlugin({ update: false })
     ],
   });
 

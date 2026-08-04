@@ -3,7 +3,7 @@
 const { test, describe, mock, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { assertControl, checkCooldown, cleanQuery, isPlaylistUrl } = require('../utils/helpers');
+const { assertControl, checkCooldown, cleanQuery, getQueryError, isPlaylistUrl } = require('../utils/helpers');
 
 function makeInteraction({ channelId = 'vc-1' } = {}) {
   return {
@@ -120,5 +120,31 @@ describe('isPlaylistUrl', () => {
     assert.equal(isPlaylistUrl('https://www.youtube.com/watch?v=eBqthnZnu3Y'), false);
     assert.equal(isPlaylistUrl('mi canción favorita'), false);
     assert.equal(isPlaylistUrl(null), false);
+  });
+});
+
+describe('getQueryError', () => {
+  test('bloquea queries que empiezan con guion (inyección de flags de yt-dlp)', () => {
+    assert.equal(getQueryError('-x'), '❌ Ese término de búsqueda no es válido.');
+    assert.equal(getQueryError('--update-to=attacker/repo@tag'), '❌ Ese término de búsqueda no es válido.');
+  });
+
+  test('bloquea protocolos no-http(s) (LFI vía file://)', () => {
+    assert.equal(getQueryError('file:///etc/passwd'), '❌ Solo se admiten enlaces http(s).');
+    assert.equal(getQueryError('ftp://x.com/y'), '❌ Solo se admiten enlaces http(s).');
+  });
+
+  test('permite URLs http(s) normales', () => {
+    assert.equal(getQueryError('https://youtube.com/watch?v=abc'), null);
+  });
+
+  test('no bloquea texto normal con guiones adentro', () => {
+    assert.equal(getQueryError('Duki - She Don\'t Give a Fo'), null);
+  });
+
+  test('bloquea queries vacías o no string', () => {
+    assert.equal(getQueryError(''), '❌ Ingresá un nombre o URL.');
+    assert.equal(getQueryError('   '), '❌ Ingresá un nombre o URL.');
+    assert.equal(getQueryError(null), '❌ Ingresá un nombre o URL.');
   });
 });
