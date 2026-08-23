@@ -7,6 +7,13 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 - Hardening anti-RCE: se bloquean queries que empiezan con `-` (inyección de flags de yt-dlp) y protocolos no-http(s) (`file://` → LFI).
 - El binario de yt-dlp ya no se auto-actualiza en runtime: se descarga en build-time y node_modules queda inmutable en el contenedor.
 
+### Corregido
+
+- **Los enlaces no reproducen (las búsquedas por texto sí)**: `download()` de @distube/yt-dlp resuelve su promesa antes de terminar la escritura del binario, y el `process.exit(0)` inmediato del Dockerfile dejaba un binario de 0 bytes en la imagen. Las búsquedas siguen funcionando porque van por SoundCloud (no usan yt-dlp); los enlaces fallaban siempre.
+  - El parche del plugin ahora espera la escritura y hace que `json()` rechace con error claro si yt-dlp sale sin output (antes: crash por `JSON.parse('')`).
+  - Nuevo `scripts/download-ytdlp.js` (`npm run setup:ytdlp`): descarga y valida el tamaño del binario; el Dockerfile lo usa y falla el build si la descarga es incompleta.
+  - El bot verifica el binario al arrancar y corta con mensaje accionable si falta o está truncado.
+
 ## [1.2.1] - 2026-08-02
 
 ### Cambiado

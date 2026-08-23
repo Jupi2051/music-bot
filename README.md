@@ -42,9 +42,10 @@ A Discord music bot that plays music from YouTube, Spotify and SoundCloud direct
    cd BotMusicaDiscord
    ```
 
-2. Install dependencies:
+2. Install dependencies and the yt-dlp binary:
    ```
    npm install
+   npm run setup:ytdlp
    ```
 
 3. Create a `.env` file in the project root:
@@ -89,6 +90,7 @@ The container includes a real healthcheck (heartbeat every 30s), memory/CPU limi
 ## Troubleshooting
 
 - **"Could not play"**: check the logs (`docker logs gordodj-bot`). If you see `Sign in to confirm you're not a bot`, YouTube is blocking the IP; the bot uses the yt-dlp `android` client to avoid it and, if needed, you can mount a `cookies.txt` (Netscape format) in the project root — the container detects it automatically.
+- **Links don't work but text searches do**: the yt-dlp binary is missing or was truncated (interrupted download during a build). Searches don't use yt-dlp (they go through SoundCloud), so only links fail. The bot checks the binary on startup and warns you; fix it with `npm run setup:ytdlp` or by rebuilding the image (`docker compose build`).
 - **The bot does not respond**: verify it is `healthy` (`docker ps`) and that the `.env` token is valid.
 
 ## Dependencies

@@ -19,19 +19,24 @@ RUN groupadd --gid 1001 --system nodejs && \
 
 WORKDIR /app
 
-# Copiar manifests y patches primero (aprovecha cache de Docker)
+# Copiar manifests, patches, scripts y utils primero (aprovecha cache de Docker)
 COPY package*.json ./
 COPY patches/ ./patches/
+COPY scripts/ ./scripts/
+COPY utils/ ./utils/
 
 # Instalar dependencias como root (necesario para compilar módulos nativos).
 # Se instala TODO (incluye devDeps) para que el postinstall corra patch-package
 # (fix del bug de JSON.parse en @distube/yt-dlp), y luego se podan las devDeps.
 RUN npm ci && npx patch-package && npm prune --omit=dev && npm cache clean --force
 
-# Descargar el binario de yt-dlp en build-time (root). Con update:false en
-# config/distube.js el runtime NO puede sobrescribirlo → si un ataque lograra
-# inyectar flags (--update-to), no habría binario reemplazable = sin RCE.
-RUN node -e "require('@distube/yt-dlp').download().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1); })"
+# Descargar el binario de yt-dlp en build-time (root) verificando que quede
+# completo. Con update:false en config/distube.js el runtime NO puede
+# sobrescribirlo → si un ataque lograra inyectar flags (--update-to), no habría
+# binario reemplazable = sin RCE. El script falla el build si la descarga
+# queda truncada: antes, el process.exit() inmediato dejaba un binario de
+# 0 bytes y los enlaces no funcionaban (las búsquedas sí, van por SoundCloud).
+RUN node scripts/download-ytdlp.js
 
 # Fijar ownership DESPUÉS del npm ci y de la descarga del binario. SOLO la
 # raíz de /app es escribible (bot-state.json): node_modules queda root-owned

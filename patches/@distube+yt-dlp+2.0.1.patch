@@ -1,8 +1,8 @@
 diff --git a/node_modules/@distube/yt-dlp/dist/index.js b/node_modules/@distube/yt-dlp/dist/index.js
-index b17b126..3fd7f30 100644
+index b17b126..43d3397 100644
 --- a/node_modules/@distube/yt-dlp/dist/index.js
 +++ b/node_modules/@distube/yt-dlp/dist/index.js
-@@ -71,18 +71,22 @@ Status code ${response.statusCode.toString()}`);
+@@ -71,18 +71,27 @@ Status code ${response.statusCode.toString()}`);
  }, "makeRequest");
  var args = /* @__PURE__ */ __name((url, flags = {}) => [url].concat((0, import_dargs.default)(flags, { useEquals: false })).filter(Boolean), "args");
  var json = /* @__PURE__ */ __name((url, flags, options) => {
@@ -21,9 +21,27 @@ index b17b126..3fd7f30 100644
 +      errorOutput += chunk;
      });
      process2.on("close", (code) => {
-       if (code === 0) resolve(JSON.parse(output));
+-      if (code === 0) resolve(JSON.parse(output));
 -      else reject(new Error(output));
-+      else reject(new Error(errorOutput || output));
++      if (code === 0) {
++        if (!output.trim()) {
++          reject(new Error("yt-dlp exited with code 0 but produced no output"));
++          return;
++        }
++        resolve(JSON.parse(output));
++      } else reject(new Error(errorOutput || output));
      });
      process2.on("error", reject);
    });
+@@ -112,10 +121,7 @@ var getBinary = /* @__PURE__ */ __name(async (url) => {
+   throw new Error(`Unsupported content type: ${contentType}`);
+ }, "getBinary");
+ var download = /* @__PURE__ */ __name(() => Promise.all([getBinary(YTDLP_URL), import_promises.default.mkdir(YTDLP_DIR, { recursive: true }).catch(() => void 0)]).then(
+-  ([{ buffer, version }]) => {
+-    import_promises.default.writeFile(YTDLP_PATH, Buffer.from(buffer), { mode: 493 });
+-    return version;
+-  }
++  ([{ buffer, version }]) => import_promises.default.writeFile(YTDLP_PATH, Buffer.from(buffer), { mode: 493 }).then(() => version)
+ ), "download");
+ 
+ // src/index.ts

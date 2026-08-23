@@ -3,7 +3,7 @@
 const { test, describe, mock, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { assertControl, checkCooldown, cleanQuery, getQueryError, isPlaylistUrl } = require('../utils/helpers');
+const { assertControl, checkCooldown, cleanQuery, evaluateYtDlpBinary, getQueryError, isPlaylistUrl, YT_DLP_MIN_BYTES, ytDlpBinaryPath } = require('../utils/helpers');
 
 function makeInteraction({ channelId = 'vc-1' } = {}) {
   return {
@@ -146,5 +146,57 @@ describe('getQueryError', () => {
     assert.equal(getQueryError(''), '❌ Ingresá un nombre o URL.');
     assert.equal(getQueryError('   '), '❌ Ingresá un nombre o URL.');
     assert.equal(getQueryError(null), '❌ Ingresá un nombre o URL.');
+  });
+});
+
+describe('evaluateYtDlpBinary', () => {
+  test('rechaza cuando el binario no existe', () => {
+    const verdict = evaluateYtDlpBinary({ exists: false, size: undefined });
+    assert.equal(verdict.ok, false);
+    assert.match(verdict.reason, /Falta el binario de yt-dlp/);
+    assert.match(verdict.reason, /setup:ytdlp/, 'debe sugerir el comando de reparación');
+  });
+
+  test('rechaza un binario vacío o truncado (descarga interrumpida)', () => {
+    for (const size of [0, 1, 1024]) {
+      const verdict = evaluateYtDlpBinary({ exists: true, size });
+      assert.equal(verdict.ok, false);
+      assert.match(verdict.reason, /vacío o truncado/);
+      assert.ok(verdict.reason.includes(String(size)), 'el motivo debe incluir el tamaño real');
+    }
+  });
+
+  test('acepta un binario de tamaño razonable', () => {
+    assert.deepEqual(evaluateYtDlpBinary({ exists: true, size: YT_DLP_MIN_BYTES }), { ok: true });
+    assert.deepEqual(evaluateYtDlpBinary({ exists: true, size: 3_072_464 }), { ok: true });
+  });
+
+  test('rechaza tamaños no numéricos aunque exista', () => {
+    const verdict = evaluateYtDlpBinary({ exists: true, size: undefined });
+    assert.equal(verdict.ok, false);
+  });
+});
+
+describe('ytDlpBinaryPath', () => {
+  test('apunta al bin dentro del paquete por defecto', () => {
+    const p = ytDlpBinaryPath();
+    assert.ok(p.includes('@distube/yt-dlp'), 'la ruta debe vivir dentro del paquete');
+    assert.ok(p.endsWith(`yt-dlp${process.platform === 'win32' ? '.exe' : ''}`));
+  });
+
+  test('honra los overrides YTDLP_DIR y YTDLP_FILENAME como el plugin', () => {
+    const prevDir = process.env.YTDLP_DIR;
+    const prevFile = process.env.YTDLP_FILENAME;
+    process.env.YTDLP_DIR = '/opt/ytdlp';
+    process.env.YTDLP_FILENAME = 'mi-yt-dlp';
+    try {
+      const p = ytDlpBinaryPath();
+      assert.equal(p, require('node:path').join('/opt/ytdlp', 'mi-yt-dlp'));
+    } finally {
+      if (prevDir === undefined) delete process.env.YTDLP_DIR;
+      else process.env.YTDLP_DIR = prevDir;
+      if (prevFile === undefined) delete process.env.YTDLP_FILENAME;
+      else process.env.YTDLP_FILENAME = prevFile;
+    }
   });
 });

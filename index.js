@@ -5,6 +5,24 @@ if (!process.env.TOKEN) {
   process.exit(1);
 }
 
+// Fail-fast: sin un binario de yt-dlp válido, las búsquedas por texto siguen
+// funcionando (van por SoundCloud) pero los ENLACES fallan con errores
+// confusos a mitad de sesión. Detectarlo al arranque con mensaje accionable.
+const { statSync } = require('fs');
+const { evaluateYtDlpBinary, ytDlpBinaryPath } = require('./utils/helpers');
+const ytdlpPath = ytDlpBinaryPath();
+let ytdlpStat = null;
+try {
+  ytdlpStat = statSync(ytdlpPath);
+} catch {
+  // ENOENT: el veredicto lo reporta como faltante
+}
+const ytdlpVerdict = evaluateYtDlpBinary({ exists: ytdlpStat !== null, size: ytdlpStat?.size });
+if (!ytdlpVerdict.ok) {
+  console.error(ytdlpVerdict.reason);
+  process.exit(1);
+}
+
 const { Client, Collection, GatewayIntentBits, ActivityType } = require('discord.js');
 const { DisTube } = require('distube');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
