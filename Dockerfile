@@ -43,6 +43,16 @@ RUN node scripts/download-ytdlp.js
 # binary is immutable at runtime (no auto-updates).
 RUN chown nodejs:nodejs /app
 
+# Pre-create /app/data (cookies.txt lives here, see docker-compose.yml) owned
+# by nodejs BEFORE anything mounts over it. Docker seeds a fresh named
+# volume's permissions from whatever already exists at the mount path in the
+# image — PaaS platforms (Dokploy, etc.) generally back a compose `volumes:`
+# entry with a named volume rather than a raw host bind mount, so without
+# this the mount point comes up root-owned and the cookie upload web UI can't
+# write to it (EACCES). Harmless for a real host bind mount too — the host
+# side's ownership wins there regardless.
+RUN mkdir -p /app/data && chown nodejs:nodejs /app/data
+
 # Switch to the non-root user
 USER nodejs
 
