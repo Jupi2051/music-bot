@@ -4,7 +4,7 @@ const { SpotifyPlugin } = require('@distube/spotify');
 const { SoundCloudPlugin } = require('@distube/soundcloud');
 const { escapeMarkdown } = require('discord.js');
 const { MAX_QUEUE_SIZE } = require('../utils/helpers');
-const { buildNowPlayingEmbed } = require('../utils/embeds');
+const { buildNowPlayingEmbed, buildAddedToQueueEmbed } = require('../utils/embeds');
 
 module.exports = (client) => {
   const distube = new DisTube(client, {
@@ -47,7 +47,8 @@ module.exports = (client) => {
         sendToChannel(queue?.textChannel, `⚠️ Queue full (max ${MAX_QUEUE_SIZE} songs). Not added: **${escapeMarkdown(song.name)}**`);
         return;
       }
-      sendToChannel(queue?.textChannel, `➕ Added: **${escapeMarkdown(song.name)}**`);
+      const position = queue.songs.indexOf(song) + 1;
+      sendToChannel(queue?.textChannel, { embeds: [buildAddedToQueueEmbed(song, { position: position > 0 ? position : undefined })] });
     })
     .on('addList', (queue, playlist) => {
       if (queue.songs.length > MAX_QUEUE_SIZE) {

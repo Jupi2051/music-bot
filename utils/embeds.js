@@ -27,21 +27,44 @@ function songDuration(song) {
   return song.formattedDuration || formatDuration(song.duration);
 }
 
-// Now-playing embed: title is the clickable song link (setURL turns the whole
-// title into a hyperlink), thumbnail is the song's cover art/video thumbnail.
-function buildNowPlayingEmbed(song, { volume } = {}) {
+// DisTube plugins tag each song with a lowercase `source` (yt-dlp uses the
+// yt-dlp extractor name, e.g. "youtube"; @distube/spotify and
+// @distube/soundcloud use "spotify"/"soundcloud"). Prettify the common ones,
+// fall back to capitalizing whatever else shows up.
+const SOURCE_LABELS = { youtube: 'YouTube', spotify: 'Spotify', soundcloud: 'SoundCloud' };
+function sourceLabel(source) {
+  if (!source) return null;
+  return SOURCE_LABELS[source.toLowerCase()] || source.charAt(0).toUpperCase() + source.slice(1);
+}
+
+// Shared song embed: clickable title (setURL turns the whole title into a
+// hyperlink), thumbnail as cover/video art, duration and source — same shape
+// whether the song came from YouTube, Spotify or SoundCloud. `authorLabel` and
+// the extra fields are what distinguish "now playing" from "added to queue".
+function buildSongEmbed(song, { authorLabel, volume, position } = {}) {
   const embed = baseEmbed()
-    .setAuthor({ name: '🎵 Now playing' })
+    .setAuthor({ name: authorLabel })
     .setTitle(song.name || 'Unknown title')
     .addFields({ name: 'Duration', value: songDuration(song), inline: true });
 
   if (song.url) embed.setURL(song.url);
   if (song.thumbnail) embed.setThumbnail(song.thumbnail);
+  const source = sourceLabel(song.source);
+  if (source) embed.addFields({ name: 'Source', value: source, inline: true });
   if (song.uploader?.name) embed.addFields({ name: 'Uploader', value: escapeMarkdown(song.uploader.name), inline: true });
   if (typeof volume === 'number') embed.addFields({ name: 'Volume', value: `${volume}%`, inline: true });
+  if (typeof position === 'number') embed.addFields({ name: 'Position in queue', value: `${position}`, inline: true });
   if (song.user) embed.addFields({ name: 'Requested by', value: `<@${song.user.id}>`, inline: true });
 
   return embed;
+}
+
+function buildNowPlayingEmbed(song, { volume } = {}) {
+  return buildSongEmbed(song, { authorLabel: '🎵 Now playing', volume });
+}
+
+function buildAddedToQueueEmbed(song, { position } = {}) {
+  return buildSongEmbed(song, { authorLabel: '➕ Added to queue', position });
 }
 
 // Queue embed: each song title is a markdown link to its URL, followed by its
@@ -81,4 +104,4 @@ function buildQueueEmbed(queue) {
   return embed;
 }
 
-module.exports = { BRAND_COLOR, buildNowPlayingEmbed, buildQueueEmbed, formatDuration };
+module.exports = { BRAND_COLOR, buildNowPlayingEmbed, buildAddedToQueueEmbed, buildQueueEmbed, formatDuration };

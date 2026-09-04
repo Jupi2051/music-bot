@@ -94,13 +94,23 @@ describe('config/distube', () => {
     assert.equal(state.catchAttached, true, 'send() should have .catch attached');
   });
 
-  test('addSong: announces the added song', () => {
+  test('addSong: sends an added-to-queue embed with title, URL, duration and position', () => {
     const { channel, state } = makeChannel();
+    const addedSong = { name: 'Song X', url: 'https://youtube.com/watch?v=x', formattedDuration: '2:40', thumbnail: 'https://img/x.jpg', source: 'spotify' };
     listeners.get('addSong')(
-      { textChannel: channel, songs: [{ name: 'A' }] },
-      { name: 'Song X' }
+      { textChannel: channel, songs: [{ name: 'A' }, addedSong] },
+      addedSong
     );
-    assert.equal(state.sent[0], '➕ Added: **Song X**');
+    const payload = state.sent[0];
+    assert.ok(Array.isArray(payload.embeds) && payload.embeds.length === 1);
+    const json = payload.embeds[0].toJSON();
+    assert.equal(json.author.name, '➕ Added to queue');
+    assert.equal(json.title, 'Song X');
+    assert.equal(json.url, 'https://youtube.com/watch?v=x');
+    assert.equal(json.thumbnail.url, 'https://img/x.jpg');
+    assert.ok(json.fields.some(f => f.name === 'Duration' && f.value === '2:40'));
+    assert.ok(json.fields.some(f => f.name === 'Source' && f.value === 'Spotify'));
+    assert.ok(json.fields.some(f => f.name === 'Position in queue' && f.value === '2'));
   });
 
   test('addSong with a full queue: trims the queue and warns', () => {
