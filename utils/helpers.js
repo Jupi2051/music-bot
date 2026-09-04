@@ -119,6 +119,15 @@ function buildYtDlpConfig({ cookiesExist, cookiesPath } = {}) {
     // whenever both are available, without dropping tv/web_safari from the
     // client list above (still needed for the bot-check fallback chain).
     '--format-sort proto:https',
+    // googlevideo signs the media URL to the IP yt-dlp resolved it from. On
+    // dual-stack hosts (common on VPS/Docker) that resolution can go out over
+    // IPv6 while ffmpeg's separate fetch of that URL goes out over IPv4 (or
+    // vice versa) — the mismatch gets the fetch rejected with a bare
+    // "HTTP error 403 Forbidden" from ffmpeg, distinct from the bot-check 403
+    // (that one fails at resolution, with "Sign in to confirm...", not here).
+    // Forcing IPv4 for yt-dlp's own resolution keeps it consistent with how
+    // most hosts actually reach googlevideo's CDN.
+    '--force-ipv4',
   ];
   if (cookiesExist && cookiesPath) lines.push(`--cookies ${cookiesPath}`);
   return `${lines.join('\n')}\n`;

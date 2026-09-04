@@ -162,6 +162,11 @@ describe('buildYtDlpConfig', () => {
     assert.match(config, /--format-sort proto:https/);
   });
 
+  test('forces IPv4 to avoid an IP-mismatch 403 on the signed CDN URL (dual-stack hosts)', () => {
+    const config = buildYtDlpConfig({ cookiesExist: false });
+    assert.match(config, /--force-ipv4/);
+  });
+
   test('omits --cookies when cookiesExist is false', () => {
     const config = buildYtDlpConfig({ cookiesExist: false, cookiesPath: '/app/cookies.txt' });
     assert.doesNotMatch(config, /--cookies/);
