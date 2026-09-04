@@ -148,13 +148,22 @@ describe('config/distube', () => {
     assert.ok(state.sent[0].includes('max 100'));
   });
 
-  test('error: sends the error message to the text channel', (t) => {
+  test('error: sends the generic error message to the text channel', (t) => {
     mock.method(console, 'error', () => {});
     t.after(() => mock.restoreAll());
     const { channel, state } = makeChannel();
     listeners.get('error')(new Error('boom'), { textChannel: channel });
     assert.equal(state.sent[0], '❌ Error playing music.');
     assert.equal(state.catchAttached, true);
+  });
+
+  test('error: sends the bot-check-specific message for a YouTube sign-in wall', (t) => {
+    mock.method(console, 'error', () => {});
+    t.after(() => mock.restoreAll());
+    const { channel, state } = makeChannel();
+    listeners.get('error')(new Error("Sign in to confirm you're not a bot."), { textChannel: channel });
+    assert.match(state.sent[0], /bot-check/);
+    assert.match(state.sent[0], /cookies\.txt/);
   });
 
   test('error without textChannel: does not crash or send anything', (t) => {

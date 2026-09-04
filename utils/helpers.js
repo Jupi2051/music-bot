@@ -86,6 +86,22 @@ function evaluateYtDlpBinary({ exists, size }) {
   return { ok: true };
 }
 
+// Turns a DisTube/yt-dlp playback error into a specific, actionable message
+// when the cause is recognized; otherwise returns `fallback`. Used by both
+// /play's catch block and the DisTube 'error' event so the message a user
+// sees in Discord — not just the server logs — says *why* it failed. This
+// matters here because YouTube links AND Spotify (which streams audio via
+// YouTube under the hood) both go through yt-dlp, so a YouTube bot-check
+// breaks both at once while SoundCloud (self-contained) keeps working —
+// without this, that looks like three unrelated failures instead of one cause.
+function describePlaybackError(error, fallback = '❌ Could not play. Try another name or URL.') {
+  const message = String(error?.message ?? error ?? '');
+  if (/sign in to confirm/i.test(message)) {
+    return '❌ YouTube is blocking this server with a bot-check (affects YouTube links and Spotify, which streams audio via YouTube — SoundCloud is unaffected). Ask the bot owner to add a `cookies.txt` file (see the README Troubleshooting section).';
+  }
+  return fallback;
+}
+
 // Resolves the yt-dlp binary path the same way @distube/yt-dlp does
 // internally (env.ts): honors YTDLP_DIR/YTDLP_FILENAME to avoid diverging.
 function ytDlpBinaryPath() {
@@ -94,4 +110,4 @@ function ytDlpBinaryPath() {
   return path.join(dir, filename);
 }
 
-module.exports = { MAX_QUEUE_SIZE, YT_DLP_MIN_BYTES, checkCooldown, assertControl, cleanQuery, isPlaylistUrl, getQueryError, evaluateYtDlpBinary, ytDlpBinaryPath };
+module.exports = { MAX_QUEUE_SIZE, YT_DLP_MIN_BYTES, checkCooldown, assertControl, cleanQuery, isPlaylistUrl, getQueryError, describePlaybackError, evaluateYtDlpBinary, ytDlpBinaryPath };

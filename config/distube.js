@@ -3,7 +3,7 @@ const { YtDlpPlugin } = require('@distube/yt-dlp');
 const { SpotifyPlugin } = require('@distube/spotify');
 const { SoundCloudPlugin } = require('@distube/soundcloud');
 const { escapeMarkdown } = require('discord.js');
-const { MAX_QUEUE_SIZE } = require('../utils/helpers');
+const { MAX_QUEUE_SIZE, describePlaybackError } = require('../utils/helpers');
 const { buildNowPlayingEmbed, buildAddedToQueueEmbed } = require('../utils/embeds');
 
 module.exports = (client) => {
@@ -61,7 +61,7 @@ module.exports = (client) => {
     })
     .on('error', (error, queue) => {
       console.error('Playback error:', error);
-      sendToChannel(queue?.textChannel, '❌ Error playing music.');
+      sendToChannel(queue?.textChannel, describePlaybackError(error, '❌ Error playing music.'));
     })
     .on('finish', queue => sendToChannel(queue?.textChannel, '✅ Playback finished.'))
     .on('empty', queue => sendToChannel(queue?.textChannel, '📭 Voice channel empty, leaving...'))

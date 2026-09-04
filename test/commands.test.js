@@ -492,6 +492,20 @@ describe('play', () => {
     assert.equal(arg, '❌ Could not play. Try another name or URL.');
   });
 
+  test('edits the reply with a bot-check-specific error if yt-dlp reports a YouTube sign-in wall', async (t) => {
+    mock.method(console, 'error', () => {});
+    t.after(() => mock.restoreAll());
+    const interaction = makeInteraction({ guildId: 'guild-play-botcheck' });
+    const client = makeClient();
+    client.distube.play = mock.fn(async () => {
+      throw new Error("DisTubeError [YTDLP_ERROR]: ERROR: [youtube] abc: Sign in to confirm you're not a bot.");
+    });
+    await play.execute(interaction, client);
+    const arg = interaction.editReply.mock.calls[0].arguments[0];
+    assert.match(arg, /bot-check/);
+    assert.match(arg, /cookies\.txt/);
+  });
+
   test('blocks a query with a yt-dlp flag without calling distube.play', async () => {
     const interaction = makeInteraction({
       guildId: 'guild-play-flag',

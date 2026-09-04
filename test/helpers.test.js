@@ -3,7 +3,7 @@
 const { test, describe, mock, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { assertControl, checkCooldown, cleanQuery, evaluateYtDlpBinary, getQueryError, isPlaylistUrl, YT_DLP_MIN_BYTES, ytDlpBinaryPath } = require('../utils/helpers');
+const { assertControl, checkCooldown, cleanQuery, describePlaybackError, evaluateYtDlpBinary, getQueryError, isPlaylistUrl, YT_DLP_MIN_BYTES, ytDlpBinaryPath } = require('../utils/helpers');
 
 function makeInteraction({ channelId = 'vc-1' } = {}) {
   return {
@@ -146,6 +146,33 @@ describe('getQueryError', () => {
     assert.equal(getQueryError(''), '❌ Enter a name or URL.');
     assert.equal(getQueryError('   '), '❌ Enter a name or URL.');
     assert.equal(getQueryError(null), '❌ Enter a name or URL.');
+  });
+});
+
+describe('describePlaybackError', () => {
+  test('recognizes a YouTube bot-check and explains it points at cookies.txt', () => {
+    const error = new Error("DisTubeError [YTDLP_ERROR]: ERROR: [youtube] abc123: Sign in to confirm you're not a bot.");
+    const message = describePlaybackError(error);
+    assert.match(message, /bot-check/);
+    assert.match(message, /cookies\.txt/);
+  });
+
+  test('is case-insensitive and matches regardless of surrounding text', () => {
+    const message = describePlaybackError(new Error('SIGN IN TO CONFIRM your age blah blah'));
+    assert.match(message, /bot-check/);
+  });
+
+  test('returns the default fallback for an unrelated error', () => {
+    assert.equal(describePlaybackError(new Error('voice connection lost')), '❌ Could not play. Try another name or URL.');
+  });
+
+  test('returns a caller-supplied fallback for an unrelated error', () => {
+    assert.equal(describePlaybackError(new Error('boom'), '❌ Error playing music.'), '❌ Error playing music.');
+  });
+
+  test('handles a plain string or an error with no message without throwing', () => {
+    assert.equal(describePlaybackError('boom'), '❌ Could not play. Try another name or URL.');
+    assert.equal(describePlaybackError(undefined), '❌ Could not play. Try another name or URL.');
   });
 });
 

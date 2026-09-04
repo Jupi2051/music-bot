@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, escapeMarkdown } = require('discord.js');
-const { MAX_QUEUE_SIZE, checkCooldown, cleanQuery, getQueryError, isPlaylistUrl } = require('../utils/helpers');
+const { MAX_QUEUE_SIZE, checkCooldown, cleanQuery, getQueryError, isPlaylistUrl, describePlaybackError } = require('../utils/helpers');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -48,7 +48,7 @@ module.exports = {
     } catch (error) {
       console.error('Error playing:', error);
       await interaction
-        .editReply('❌ Could not play. Try another name or URL.')
+        .editReply(describePlaybackError(error))
         .catch(() => {});
     }
   },
