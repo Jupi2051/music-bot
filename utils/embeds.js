@@ -1,13 +1,12 @@
 const { EmbedBuilder, escapeMarkdown } = require('discord.js');
 
 const BRAND_COLOR = 0x8b5cf6;
-const FOOTER_TEXT = 'GordoDJ';
 
 // Description hard cap is 4096 chars; leave room for the "…and N more" line.
 const MAX_DESCRIPTION = 4096;
 
 function baseEmbed() {
-  return new EmbedBuilder().setColor(BRAND_COLOR).setFooter({ text: FOOTER_TEXT }).setTimestamp();
+  return new EmbedBuilder().setColor(BRAND_COLOR).setTimestamp();
 }
 
 // mm:ss / h:mm:ss for a raw seconds count. Songs already carry
@@ -99,7 +98,7 @@ function buildQueueEmbed(queue) {
   embed.setDescription(description);
 
   const totalSeconds = queue.songs.reduce((acc, song) => acc + (Number.isFinite(song.duration) ? song.duration : 0), 0);
-  embed.setFooter({ text: `${FOOTER_TEXT} • ${queue.songs.length} song(s) • Total: ${formatDuration(totalSeconds)}` });
+  embed.setFooter({ text: `${queue.songs.length} song(s) • Total: ${formatDuration(totalSeconds)}` });
 
   return embed;
 }
