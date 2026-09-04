@@ -63,6 +63,13 @@ module.exports = (client) => {
       console.error('Playback error:', error);
       sendToChannel(queue?.textChannel, describePlaybackError(error, '❌ Error playing music.'));
     })
+    // ffmpeg's stderr, line by line — DisTubeStream captures it but nothing
+    // logs it by default, so an FFMPEG_EXITED error normally only tells you
+    // the exit code, not *why*. Only log lines that look like real errors to
+    // avoid flooding logs with routine info-level ffmpeg output.
+    .on('ffmpegDebug', message => {
+      if (/error|invalid|failed|forbidden|403|404|fatal/i.test(message)) console.error('[ffmpeg]', message);
+    })
     .on('finish', queue => sendToChannel(queue?.textChannel, '✅ Playback finished.'))
     .on('empty', queue => sendToChannel(queue?.textChannel, '📭 Voice channel empty, leaving...'))
     .on('disconnect', queue => sendToChannel(queue?.textChannel, '👋 Disconnected from the channel.'));

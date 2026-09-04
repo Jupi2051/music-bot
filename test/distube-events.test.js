@@ -174,6 +174,22 @@ describe('config/distube', () => {
     assert.equal(state.sent.length, 0);
   });
 
+  test('ffmpegDebug: logs lines that look like real ffmpeg errors', (t) => {
+    const errorLog = mock.method(console, 'error', () => {});
+    t.after(() => mock.restoreAll());
+    listeners.get('ffmpegDebug')('[https @ 0x123] HTTP error 403 Forbidden');
+    assert.equal(errorLog.mock.calls.length, 1);
+    assert.equal(errorLog.mock.calls[0].arguments[0], '[ffmpeg]');
+    assert.match(errorLog.mock.calls[0].arguments[1], /403 Forbidden/);
+  });
+
+  test('ffmpegDebug: does not log routine info-level lines', (t) => {
+    const errorLog = mock.method(console, 'error', () => {});
+    t.after(() => mock.restoreAll());
+    listeners.get('ffmpegDebug')('Stream #0:0: Audio: aac, 48000 Hz, stereo');
+    assert.equal(errorLog.mock.calls.length, 0);
+  });
+
   test('finish: announces that playback finished', () => {
     const { channel, state } = makeChannel();
     listeners.get('finish')({ textChannel: channel });
