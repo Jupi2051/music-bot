@@ -209,9 +209,7 @@ describe('skip', () => {
     assert.equal(replyArg(interaction), '⏭️ Song skipped.');
   });
 
-  test('replies that there are no more songs when skip() throws NO_UP_NEXT', async (t) => {
-    mock.method(console, 'error', () => {});
-    t.after(() => mock.restoreAll());
+  test('stops playback and waits (does not disconnect) when skip() throws NO_UP_NEXT', async () => {
     const interaction = makeInteraction();
     const queue = makeQueue({
       skip: mock.fn(async () => {
@@ -221,7 +219,40 @@ describe('skip', () => {
       }),
     });
     await skip.execute(interaction, makeClient({ queue }));
-    assert.equal(replyArg(interaction), '⚠️ No more songs to skip.');
+    assert.equal(queue.stop.mock.calls.length, 1);
+    assert.match(replyArg(interaction), /Song skipped/);
+    assert.match(replyArg(interaction), /wait/i);
+  });
+
+  test('also treats NO_SONG_POSITION as "no next song" and stops playback', async () => {
+    const interaction = makeInteraction();
+    const queue = makeQueue({
+      skip: mock.fn(async () => {
+        const err = new Error('invalid position');
+        err.errorCode = 'NO_SONG_POSITION';
+        throw err;
+      }),
+    });
+    await skip.execute(interaction, makeClient({ queue }));
+    assert.equal(queue.stop.mock.calls.length, 1);
+  });
+
+  test('replies with a generic error if stopping after the last song also fails', async (t) => {
+    mock.method(console, 'error', () => {});
+    t.after(() => mock.restoreAll());
+    const interaction = makeInteraction();
+    const queue = makeQueue({
+      skip: mock.fn(async () => {
+        const err = new Error('no more songs');
+        err.errorCode = 'NO_UP_NEXT';
+        throw err;
+      }),
+      stop: mock.fn(async () => {
+        throw new Error('stop failed too');
+      }),
+    });
+    await skip.execute(interaction, makeClient({ queue }));
+    assert.equal(replyArg(interaction), '❌ Could not skip the song.');
   });
 
   test('replies with a real error if skip() fails for another reason', async (t) => {

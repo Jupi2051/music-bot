@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Shared `utils/embeds.js` styling (brand color, footer, timestamp) reused by `/queue`, `/nowplaying` and the automatic "now playing"/"added to queue" announcements
 
 ### Changed
+- `/skip` on the last song in the queue now stops playback and waits (bot stays connected) instead of erroring with "no more songs to skip" while the song kept playing in the background. `queue.skip()` throws before touching anything when there's nothing next, so `skip.js` now calls `queue.stop()` in that case — same as `/stop` minus disconnecting — mirroring what already happens when a song ends naturally with an empty queue.
 - `/play` with a plain-text query (not a URL) now defaults to YouTube instead of SoundCloud. DisTube's own search step only considers plugins typed `"extractor"` — SoundCloud is the only one configured that qualifies (`@distube/yt-dlp`'s is `"playable-extractor"`, never eligible there regardless of plugin order), which is why text search always went through SoundCloud before. `commands/play.js` now resolves plain-text queries directly through `YtDlpPlugin` (yt-dlp's own `ytsearchN:` syntax) and hands DisTube the resolved song, falling back to the old SoundCloud-search path only if yt-dlp genuinely finds nothing. Direct URLs (YouTube/Spotify/SoundCloud links) are unaffected. Trade-off: search now depends on yt-dlp/YouTube being reachable, same as links — previously a YouTube outage only broke links while text search kept working via SoundCloud.
 
 ### Fixed
