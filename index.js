@@ -53,12 +53,19 @@ process.on('unhandledRejection', (reason) => {
 
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
-  process.exit(1); // PM2/Docker reinician el proceso
+  process.exit(1); // PM2/Docker will restart the process
 });
 
 client.on('error', (err) => {
-  console.error('Error del cliente Discord:', err);
+  console.error('Discord client error:', err);
 });
+
+// Cookie upload web UI (utils/textCommands.js counterpart for cookies.txt):
+// opt-in via COOKIE_SERVER_PORT so upgrading an existing deployment doesn't
+// silently start listening on a new port. See web/cookieServer.js.
+if (process.env.COOKIE_SERVER_PORT) {
+  require('./web/cookieServer').startCookieServer();
+}
 
 // Load commands
 const commandsPath = path.join(__dirname, 'commands');

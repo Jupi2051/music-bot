@@ -90,9 +90,27 @@ The container includes a real healthcheck (heartbeat every 30s), memory/CPU limi
 6. Use the generated URL to invite the bot to your servers
 7. Under the "Bot" section, enable **Message Content Intent** — required for text/prefix commands (see [Commands](#commands)) to read message content. `Guilds`, `GuildMessages` and `GuildVoiceStates` are also needed but are non-privileged. You do not need Server Members or Presence.
 
+## YouTube cookies (fixing the bot-check)
+
+YouTube sometimes blocks the bot with `Sign in to confirm you're not a bot`. This affects direct YouTube links *and* Spotify (which streams audio via YouTube under the hood) — SoundCloud is unaffected either way. The fix is a `cookies.txt` from a real, logged-in YouTube session.
+
+**Easiest: the built-in cookie upload page.** Set in `.env`:
+```
+COOKIE_SERVER_PORT=8080
+```
+On Docker, also run `touch cookies.txt` in the project root before the first `docker compose up` (otherwise Docker auto-creates the mount target as a root-owned stub the bot can't write to — see the comment in `docker-compose.yml`). Start/restart the bot, then check the logs (`docker logs gordodj-bot` or your console) for a line like:
+```
+🍪 Cookie upload page: http://localhost:8080/?token=<random-token>
+```
+Open that URL — the page has a step-by-step tutorial (using the "Get cookies.txt LOCALLY" or "Cookie-Editor" browser extension) and a form to submit the cookies. No restart needed; it takes effect on the next request. Set `COOKIE_SERVER_TOKEN` in `.env` to fix the token instead of a new random one each restart, and treat that URL as a secret — anyone with it can overwrite the bot's YouTube session. If you're exposing this on a public VM, restrict the port with a firewall/VPN rather than relying on the token alone.
+
+**Manual alternative**: export a Netscape-format `cookies.txt` yourself (e.g. `yt-dlp --cookies-from-browser chrome --cookies cookies.txt`) and drop it in the project root — the container picks it up the same way.
+
+Cookies expire/rotate, so you may need to redo this occasionally.
+
 ## Troubleshooting
 
-- **"Could not play" / `Sign in to confirm you're not a bot`**: YouTube is blocking the IP. The bot tries a fallback chain of yt-dlp player clients (`tv`, `web_safari`, `android`) to avoid this, but YouTube's bot-check keeps tightening and no client-spoofing trick is permanently reliable. First, make sure yt-dlp itself is current — rebuild the image (`docker compose build --no-cache`) or run `npm run setup:ytdlp` locally, since an outdated binary is the most common cause. If it still fails, mount a `cookies.txt` (Netscape format, exported from a logged-in YouTube session) in the project root — the container detects it automatically and this is the only fully reliable fix.
+- **"Could not play" / `Sign in to confirm you're not a bot`**: see [YouTube cookies](#youtube-cookies-fixing-the-bot-check) above. The bot also tries a fallback chain of yt-dlp player clients (`tv`, `web_safari`, `android`) to reduce how often this happens, but YouTube's bot-check keeps tightening and no client-spoofing trick is permanently reliable — cookies are the only fully reliable fix. Also make sure yt-dlp itself is current (`npm run setup:ytdlp` or `docker compose build --no-cache`); an outdated binary is the next most common cause.
 - **Links don't work but text searches do**: the yt-dlp binary is missing or was truncated (interrupted download during a build). Searches don't use yt-dlp (they go through SoundCloud), so only links fail. The bot checks the binary on startup and warns you; fix it with `npm run setup:ytdlp` or by rebuilding the image (`docker compose build`).
 - **The bot does not respond**: verify it is `healthy` (`docker ps`) and that the `.env` token is valid.
 

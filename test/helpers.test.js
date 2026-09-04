@@ -3,7 +3,7 @@
 const { test, describe, mock, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { assertControl, checkCooldown, cleanQuery, describePlaybackError, evaluateYtDlpBinary, getQueryError, isPlaylistUrl, YT_DLP_MIN_BYTES, ytDlpBinaryPath } = require('../utils/helpers');
+const { assertControl, buildYtDlpConfig, checkCooldown, cleanQuery, describePlaybackError, evaluateYtDlpBinary, getQueryError, isPlaylistUrl, YT_DLP_MIN_BYTES, ytDlpBinaryPath } = require('../utils/helpers');
 
 function makeInteraction({ channelId = 'vc-1' } = {}) {
   return {
@@ -146,6 +146,34 @@ describe('getQueryError', () => {
     assert.equal(getQueryError(''), '❌ Enter a name or URL.');
     assert.equal(getQueryError('   '), '❌ Enter a name or URL.');
     assert.equal(getQueryError(null), '❌ Enter a name or URL.');
+  });
+});
+
+describe('buildYtDlpConfig', () => {
+  test('always includes the js-runtime, player-client chain and playlist limit', () => {
+    const config = buildYtDlpConfig({ cookiesExist: false });
+    assert.match(config, /--js-runtimes node/);
+    assert.match(config, /--extractor-args youtube:player_client=tv,web_safari,android/);
+    assert.match(config, /--playlist-end 15/);
+  });
+
+  test('omits --cookies when cookiesExist is false', () => {
+    const config = buildYtDlpConfig({ cookiesExist: false, cookiesPath: '/app/cookies.txt' });
+    assert.doesNotMatch(config, /--cookies/);
+  });
+
+  test('omits --cookies when cookiesExist is true but no path is given', () => {
+    const config = buildYtDlpConfig({ cookiesExist: true });
+    assert.doesNotMatch(config, /--cookies/);
+  });
+
+  test('appends --cookies with the given path when cookiesExist is true', () => {
+    const config = buildYtDlpConfig({ cookiesExist: true, cookiesPath: '/app/cookies.txt' });
+    assert.match(config, /--cookies \/app\/cookies\.txt$/m);
+  });
+
+  test('ends with a trailing newline', () => {
+    assert.ok(buildYtDlpConfig({ cookiesExist: false }).endsWith('\n'));
   });
 });
 

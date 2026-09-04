@@ -102,6 +102,21 @@ function describePlaybackError(error, fallback = '❌ Could not play. Try anothe
   return fallback;
 }
 
+// Builds the yt-dlp user config file content. Shared by scripts/write-ytdlp-config.js
+// (run at container boot by entrypoint.sh) and web/cookieServer.js (run again
+// whenever a new cookies.txt is submitted through the web form, so the change
+// applies immediately without a container restart) — keeping this in one
+// place means both stay in sync instead of duplicating it in shell and JS.
+function buildYtDlpConfig({ cookiesExist, cookiesPath } = {}) {
+  const lines = [
+    '--js-runtimes node',
+    '--extractor-args youtube:player_client=tv,web_safari,android',
+    '--playlist-end 15',
+  ];
+  if (cookiesExist && cookiesPath) lines.push(`--cookies ${cookiesPath}`);
+  return `${lines.join('\n')}\n`;
+}
+
 // Resolves the yt-dlp binary path the same way @distube/yt-dlp does
 // internally (env.ts): honors YTDLP_DIR/YTDLP_FILENAME to avoid diverging.
 function ytDlpBinaryPath() {
@@ -110,4 +125,4 @@ function ytDlpBinaryPath() {
   return path.join(dir, filename);
 }
 
-module.exports = { MAX_QUEUE_SIZE, YT_DLP_MIN_BYTES, checkCooldown, assertControl, cleanQuery, isPlaylistUrl, getQueryError, describePlaybackError, evaluateYtDlpBinary, ytDlpBinaryPath };
+module.exports = { MAX_QUEUE_SIZE, YT_DLP_MIN_BYTES, checkCooldown, assertControl, cleanQuery, isPlaylistUrl, getQueryError, describePlaybackError, buildYtDlpConfig, evaluateYtDlpBinary, ytDlpBinaryPath };

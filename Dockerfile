@@ -57,6 +57,11 @@ RUN chmod +x /app/entrypoint.sh
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=512"
 
+# Cookie upload web UI (web/cookieServer.js): only actually listens if
+# COOKIE_SERVER_PORT is set in .env — this alone doesn't publish anything,
+# docker-compose.yml's `ports:` does that.
+EXPOSE 8080
+
 # Healthcheck to verify the bot is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD node healthcheck.js || exit 1
