@@ -145,6 +145,23 @@ describe('cookie server (http)', () => {
     assert.match(html, /Cookies are currently configured/);
   }));
 
+  test('creates the parent directory when it does not exist yet', (t) => withTmpDir(async (dir) => {
+    const cookiesPath = path.join(dir, 'data', 'cookies.txt');
+    const configPath = path.join(dir, 'config');
+    const server = startCookieServer({ port: 0, token: 'test-token', cookiesPath, configPath });
+    t.after(() => server.close());
+    await new Promise((resolve) => server.on('listening', resolve));
+    const port = server.address().port;
+
+    const res = await fetch(`http://localhost:${port}/cookies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ token: 'test-token', cookies: NETSCAPE_SAMPLE }).toString(),
+    });
+    assert.equal(res.status, 200);
+    assert.equal(fs.readFileSync(cookiesPath, 'utf8'), NETSCAPE_SAMPLE);
+  }));
+
   test('replaces a directory left at cookiesPath by a fresh Docker bind-mount', (t) => withServer(t, async ({ port, cookiesPath }) => {
     fs.rmSync(cookiesPath, { recursive: true, force: true });
     fs.mkdirSync(cookiesPath);

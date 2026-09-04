@@ -28,6 +28,9 @@ coverage/
 *.swo
 cookies.txt
 
+# Persistent data dir (cookies.txt lives here — see docker-compose.yml)
+data/
+
 # Bot runtime state
 commands-state.json
 bot-state.json

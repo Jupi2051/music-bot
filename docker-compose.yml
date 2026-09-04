@@ -8,14 +8,21 @@ services:
     env_file:
       - .env
     volumes:
-      # YouTube cookies (optional): avoids YouTube's bot-check. File is
-      # gitignored (it's a secret). Writable (no :ro) so the cookie upload web
-      # UI (web/cookieServer.js) can update it in place, bind-mounted so
-      # changes persist on the host across container restarts.
-      # IMPORTANT: run `touch cookies.txt` on the host before the first
-      # `docker compose up` — otherwise Docker auto-creates the mount target
-      # as a root-owned stub the nodejs user (uid 1001) can't write to.
-      - ./cookies.txt:/app/cookies.txt
+      # Persistent data dir, currently just cookies.txt (optional, avoids
+      # YouTube's bot-check; gitignored, it's a secret). Mounting a DIRECTORY
+      # here — not the file itself — is deliberate: a path that IS the mount
+      # point can never be replaced with a plain file from inside the
+      # container (rmdir/unlink on an active mount throws EBUSY,
+      # unconditionally), which broke the cookie upload web UI when it tried
+      # to write cookies.txt directly at a bind-mounted /app/cookies.txt. A
+      # mounted directory has no such problem — cookies.txt lives as a normal,
+      # freely-writable file inside it. Writable (no :ro) so the web UI
+      # (web/cookieServer.js) can save it in place; bind-mounted so it
+      # persists on the host across container restarts.
+      # If writes fail with EACCES (not EISDIR) instead: the host ./data
+      # directory was auto-created root-owned on first run — fix with
+      # `chown 1001:1001 ./data` (or `chmod 777 ./data`) on the host.
+      - ./data:/app/data
     ports:
       # Cookie upload web UI — only actually listens if COOKIE_SERVER_PORT is
       # set in .env; otherwise this maps to nothing and is harmless. See the

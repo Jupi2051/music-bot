@@ -98,7 +98,7 @@ YouTube sometimes blocks the bot with `Sign in to confirm you're not a bot`. Thi
 ```
 COOKIE_SERVER_PORT=8080
 ```
-On Docker, also run `touch cookies.txt` in the project root before the first `docker compose up` (otherwise Docker auto-creates the mount target as a root-owned stub the bot can't write to — see the comment in `docker-compose.yml`). Start/restart the bot and open `http://<your-host>:8080/` (or your domain, if you're proxying it through something like Dokploy/Traefik — make sure its port setting matches `COOKIE_SERVER_PORT`). No restart needed after submitting; it takes effect on the next request.
+On Docker, `docker-compose.yml` mounts a `./data` directory (created automatically on first run) rather than `cookies.txt` directly — mounting the file itself would make it undeletable/unwritable from inside the container (a mount point can't be replaced with a plain file). Start/restart the bot and open `http://<your-host>:8080/` (or your domain, if you're proxying it through something like Dokploy/Traefik — make sure its port setting matches `COOKIE_SERVER_PORT`). No restart needed after submitting; it takes effect on the next request.
 
 By default this page has **no authentication** — anyone who can reach the port can view it and overwrite the bot's YouTube cookies. That's fine for a port only reachable on a private network or via SSH tunnel, but if it's reachable from the public internet (e.g. exposed through a domain), set a token in `.env`:
 ```
@@ -106,7 +106,7 @@ COOKIE_SERVER_TOKEN=choose_a_long_random_string
 ```
 With this set, every request needs `?token=...` appended to the URL to load the page at all (the logs print the full URL to use). Without it, the page and its tutorial (using the "Get cookies.txt LOCALLY" or "Cookie-Editor" browser extension) are open to whoever has the link.
 
-**Manual alternative**: export a Netscape-format `cookies.txt` yourself (e.g. `yt-dlp --cookies-from-browser chrome --cookies cookies.txt`) and drop it in the project root — the container picks it up the same way.
+**Manual alternative**: export a Netscape-format `cookies.txt` yourself (e.g. `yt-dlp --cookies-from-browser chrome --cookies cookies.txt`) and drop it in `data/cookies.txt` (create the `data/` folder if it doesn't exist yet) — the container picks it up the same way. It won't apply until the next container start, unlike submitting through the web page above, which hot-reloads.
 
 Cookies expire/rotate, so you may need to redo this occasionally.
 

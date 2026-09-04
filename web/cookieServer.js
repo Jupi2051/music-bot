@@ -14,6 +14,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const http = require('http');
+const path = require('path');
 const { writeYtDlpConfig, DEFAULT_COOKIES_PATH } = require('../scripts/write-ytdlp-config');
 
 const MAX_BODY_BYTES = 512 * 1024; // Netscape cookies.txt files are a few KB; this is generous
@@ -35,14 +36,16 @@ function looksLikeNetscapeCookies(text) {
     .some((line) => line.trim() && !line.startsWith('#') && line.split('\t').length >= 7);
 }
 
-// Docker creates an empty DIRECTORY at the bind-mount target when the host
-// file doesn't exist yet on first `docker compose up` (see entrypoint.sh's
-// long-standing comment on this). Clear that stub before writing a real file.
+// Defensive only: cookiesPath is expected to live inside a mounted directory
+// (see docker-compose.yml), never be a mount point itself, so this shouldn't
+// normally fire. If it's ever a plain leftover directory (not an active
+// mount — those can't be removed this way, see write-ytdlp-config.js), clear
+// it so writeFileSync doesn't fail with EISDIR.
 function clearDirectoryStub(filePath) {
   try {
     if (fs.statSync(filePath).isDirectory()) fs.rmdirSync(filePath);
   } catch {
-    // ENOENT: nothing to clear
+    // ENOENT, or EBUSY on an actual mount point: nothing we can do from here
   }
 }
 
@@ -211,6 +214,7 @@ function startCookieServer({ port, token, cookiesPath = DEFAULT_COOKIES_PATH, co
         }
 
         try {
+          fs.mkdirSync(path.dirname(cookiesPath), { recursive: true });
           clearDirectoryStub(cookiesPath);
           fs.writeFileSync(cookiesPath, cookiesText.endsWith('\n') ? cookiesText : `${cookiesText}\n`);
           writeYtDlpConfig({ cookiesPath, ...(configPath ? { configPath } : {}) });

@@ -11,7 +11,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { writeYtDlpConfig } = require('../scripts/write-ytdlp-config');
+const { writeYtDlpConfig, DEFAULT_DATA_DIR, DEFAULT_COOKIES_PATH } = require('../scripts/write-ytdlp-config');
 
 function withTmpDir(fn) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytdlp-cfg-'));
@@ -82,5 +82,16 @@ describe('writeYtDlpConfig', () => {
       assert.equal(result.cookiesExist, false);
       assert.doesNotMatch(fs.readFileSync(configPath, 'utf8'), /--cookies/);
     });
+  });
+});
+
+describe('default paths', () => {
+  test('DEFAULT_COOKIES_PATH lives inside DEFAULT_DATA_DIR, not at a would-be mount point', () => {
+    // Regression: cookies.txt must never be the literal path Docker mounts,
+    // since a mount point can't be replaced by a plain file from inside the
+    // container (EBUSY) — see the comment in docker-compose.yml.
+    assert.equal(path.dirname(DEFAULT_COOKIES_PATH), DEFAULT_DATA_DIR);
+    assert.equal(path.basename(DEFAULT_COOKIES_PATH), 'cookies.txt');
+    assert.equal(path.basename(DEFAULT_DATA_DIR), 'data');
   });
 });

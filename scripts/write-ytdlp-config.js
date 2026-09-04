@@ -15,7 +15,13 @@ const os = require('os');
 const path = require('path');
 const { buildYtDlpConfig } = require('../utils/helpers');
 
-const DEFAULT_COOKIES_PATH = path.join(__dirname, '..', 'cookies.txt');
+// cookies.txt lives INSIDE a mounted directory (data/), not at the mount
+// point itself. A path that IS the mount point can never be replaced with a
+// plain file from inside the container (rmdir/unlink on an active mount
+// point throws EBUSY, unconditionally, bind mount or named volume) — see the
+// volume mount comment in docker-compose.yml.
+const DEFAULT_DATA_DIR = path.join(__dirname, '..', 'data');
+const DEFAULT_COOKIES_PATH = path.join(DEFAULT_DATA_DIR, 'cookies.txt');
 const DEFAULT_CONFIG_PATH = path.join(os.homedir(), '.config', 'yt-dlp', 'config');
 
 function writeYtDlpConfig({ cookiesPath = DEFAULT_COOKIES_PATH, configPath = DEFAULT_CONFIG_PATH } = {}) {
@@ -24,7 +30,7 @@ function writeYtDlpConfig({ cookiesPath = DEFAULT_COOKIES_PATH, configPath = DEF
     const stat = fs.statSync(cookiesPath);
     cookiesExist = stat.isFile() && stat.size > 0;
   } catch {
-    // ENOENT (or a directory — see cleanCookiesPathStub in web/cookieServer.js): no cookies yet
+    // ENOENT: no cookies yet
   }
 
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
@@ -37,5 +43,5 @@ if (require.main === module) {
   const result = writeYtDlpConfig();
   console.log(result.cookiesExist ? '🍪 YouTube cookies detected' : '⚠️  No cookies.txt: YouTube may block with a bot-check');
 } else {
-  module.exports = { writeYtDlpConfig, DEFAULT_COOKIES_PATH, DEFAULT_CONFIG_PATH };
+  module.exports = { writeYtDlpConfig, DEFAULT_DATA_DIR, DEFAULT_COOKIES_PATH, DEFAULT_CONFIG_PATH };
 }
