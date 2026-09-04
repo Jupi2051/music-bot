@@ -106,7 +106,7 @@ COOKIE_SERVER_TOKEN=choose_a_long_random_string
 ```
 With this set, every request needs `?token=...` appended to the URL to load the page at all (the logs print the full URL to use). Without it, the page and its tutorial (using the "Get cookies.txt LOCALLY" or "Cookie-Editor" browser extension) are open to whoever has the link.
 
-If saving fails with `EACCES: permission denied`: the image bakes in nodejs-owned permissions for `/app/data`, which a *freshly created* named volume inherits (this is what most PaaS platforms, including Dokploy, back a compose `volumes:` entry with) — so this is usually a stale volume from before that fix. Removing and recreating the volume/deployment fixes it. On a plain `docker compose up` with a real host bind mount instead, fix host-side ownership directly: `chown 1001:1001 ./data`.
+If saving fails with `EACCES: permission denied` or `ENOENT`: the container fixes `/app/data`'s ownership itself on every boot (`entrypoint.sh`, via a brief root step that then drops to the non-root `nodejs` user), so this should self-heal on the next restart regardless of how the volume was created. If it persists, you're most likely running an older image — rebuild (not just restart) so `entrypoint.sh`'s latest version is actually in the container.
 
 **Manual alternative**: export a Netscape-format `cookies.txt` yourself (e.g. `yt-dlp --cookies-from-browser chrome --cookies cookies.txt`) and drop it in `data/cookies.txt` (create the `data/` folder if it doesn't exist yet) — the container picks it up the same way. It won't apply until the next container start, unlike submitting through the web page above, which hot-reloads.
 

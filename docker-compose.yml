@@ -19,13 +19,11 @@ services:
       # freely-writable file inside it. Writable (no :ro) so the web UI
       # (web/cookieServer.js) can save it in place; bind-mounted so it
       # persists on the host across container restarts.
-      # Ownership: the Dockerfile pre-creates /app/data owned by nodejs
-      # (uid 1001) so a freshly-created named volume (what most PaaS
-      # platforms, e.g. Dokploy, back a `volumes:` entry with) inherits that
-      # ownership automatically. A real host bind mount is NOT covered by
-      # that — if writes still fail with EACCES on a plain `docker compose up`
-      # setup, fix host-side ownership with `chown 1001:1001 ./data` (or
-      # `chmod 777 ./data`).
+      # Ownership: don't rely on this mount coming up owned by nodejs
+      # (uid 1001) — different volume drivers/platforms handle a fresh mount
+      # point's permissions inconsistently. entrypoint.sh force-chowns
+      # /app/data to nodejs on every container boot instead, so this works
+      # regardless of what created the volume or how.
       - ./data:/app/data
     ports:
       # Cookie upload web UI — only actually listens if COOKIE_SERVER_PORT is

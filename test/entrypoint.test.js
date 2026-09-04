@@ -26,3 +26,12 @@ test('entrypoint.sh execs node index.js as the final step', () => {
 test('entrypoint.sh fails fast on error (set -e)', () => {
   assert.match(source, /^set -e$/m);
 });
+
+test('entrypoint.sh re-chowns /app/data on every boot regardless of what the volume driver left it as', () => {
+  assert.match(source, /chown -R nodejs:nodejs \/app\/data/);
+});
+
+test('entrypoint.sh drops root via gosu before running anything else', () => {
+  assert.match(source, /exec gosu nodejs/);
+});
+
