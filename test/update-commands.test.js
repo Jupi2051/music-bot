@@ -107,13 +107,13 @@ describe('checkAndUpdateCommands', () => {
     const putCall = rest.instances[0].calls[0];
     assert.ok(putCall, 'should have called REST.put');
     assert.match(putCall.url, /\/applications\/123456789\/commands$/);
-    assert.equal(putCall.body.length, 10);
+    assert.equal(putCall.body.length, 11);
 
     // Critical order: deploy first, save state after
     assert.deepEqual(eventLog, ['put', 'write']);
 
     const written = JSON.parse(stateStore.get(statePath));
-    assert.equal(written.count, 10);
+    assert.equal(written.count, 11);
     assert.ok(written.hash.length > 0);
     assert.ok(written.timestamp);
     firstHash = written.hash;

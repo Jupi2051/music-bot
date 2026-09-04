@@ -12,6 +12,7 @@ module.exports = {
       '`/pause` - Pauses the current song',
       '`/resume` - Resumes the paused song',
       '`/queue` - Shows the songs in the queue',
+      '`/nowplaying` - Shows the song currently playing',
       '`/volume [1-100]` - Changes the bot volume',
       '`/set [time]` - Changes the playback position (e.g. 3:20)',
       '`/leave` - Makes the bot leave the voice channel',

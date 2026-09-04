@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, escapeMarkdown } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
+const { buildQueueEmbed } = require('../utils/embeds');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -8,9 +9,6 @@ module.exports = {
     const queue = client.distube.getQueue(interaction);
     if (!queue) return interaction.reply({ content: '📭 The queue is empty.', ephemeral: true });
 
-    const songs = queue.songs
-      .map((song, i) => `${i === 0 ? '🎶' : `${i}.`} ${escapeMarkdown(song.name)}`)
-      .join('\n');
-    await interaction.reply(`📀 **Current queue:**\n${songs}`);
+    await interaction.reply({ embeds: [buildQueueEmbed(queue)] });
   },
 };

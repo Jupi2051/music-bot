@@ -21,6 +21,7 @@ const queueCmd = require('../commands/queue');
 const leave = require('../commands/leave');
 const help = require('../commands/help');
 const set = require('../commands/set');
+const nowplaying = require('../commands/nowplaying');
 
 const VC_BOT = 'vc-bot';
 const VC_OTHER = 'vc-other';
@@ -48,7 +49,11 @@ function makeQueue(overrides = {}) {
   return {
     playing: true,
     voiceChannel: { id: VC_BOT },
-    songs: [{ name: 'Song A' }, { name: 'Song B' }],
+    volume: 50,
+    songs: [
+      { name: 'Song A', url: 'https://youtube.com/watch?v=a', duration: 125, formattedDuration: '2:05' },
+      { name: 'Song B', url: 'https://youtube.com/watch?v=b', duration: 200, formattedDuration: '3:20' },
+    ],
     pause: mock.fn(() => {}),
     resume: mock.fn(() => {}),
     skip: mock.fn(async () => {}),
@@ -304,13 +309,52 @@ describe('queue', () => {
     assert.equal(replyContent(interaction), '📭 The queue is empty.');
   });
 
-  test('shows the formatted queue with song titles', async () => {
+  test('shows an embed with song titles as links and their durations', async () => {
     const interaction = makeInteraction();
-    const queue = makeQueue({ songs: [{ name: 'Song A' }, { name: 'Song B' }] });
+    const queue = makeQueue();
     await queueCmd.execute(interaction, makeClient({ queue }));
-    const content = replyArg(interaction);
-    assert.ok(content.includes('🎶 Song A'));
-    assert.ok(content.includes('1. Song B'));
+    const arg = replyArg(interaction);
+    assert.ok(Array.isArray(arg.embeds) && arg.embeds.length === 1);
+    const json = arg.embeds[0].toJSON();
+    assert.equal(json.title, '📀 Current queue');
+    assert.ok(json.description.includes('[Song A](https://youtube.com/watch?v=a)'));
+    assert.ok(json.description.includes('[Song B](https://youtube.com/watch?v=b)'));
+    assert.ok(json.description.includes('[2:05]'));
+    assert.ok(json.description.includes('[3:20]'));
+    assert.ok(json.footer.text.includes('2 song(s)'));
+  });
+});
+
+describe('nowplaying', () => {
+  test('replies with an error if there is no queue', async () => {
+    const interaction = makeInteraction();
+    await nowplaying.execute(interaction, makeClient({ queue: null }));
+    const arg = replyArg(interaction);
+    assert.equal(arg.content, '❌ No music is playing.');
+    assert.equal(arg.ephemeral, true);
+  });
+
+  test('replies with an error if the queue has no songs', async () => {
+    const interaction = makeInteraction();
+    const queue = makeQueue({ songs: [] });
+    await nowplaying.execute(interaction, makeClient({ queue }));
+    const arg = replyArg(interaction);
+    assert.equal(arg.content, '❌ No music is playing.');
+  });
+
+  test('shows an embed with the current song as a clickable title, thumbnail and volume', async () => {
+    const interaction = makeInteraction();
+    const queue = makeQueue({
+      songs: [{ name: 'Song A', url: 'https://youtube.com/watch?v=a', duration: 125, formattedDuration: '2:05', thumbnail: 'https://img/a.jpg' }],
+    });
+    await nowplaying.execute(interaction, makeClient({ queue }));
+    const arg = replyArg(interaction);
+    const json = arg.embeds[0].toJSON();
+    assert.equal(json.title, 'Song A');
+    assert.equal(json.url, 'https://youtube.com/watch?v=a');
+    assert.equal(json.thumbnail.url, 'https://img/a.jpg');
+    assert.ok(json.fields.some(f => f.name === 'Duration' && f.value === '2:05'));
+    assert.ok(json.fields.some(f => f.name === 'Volume' && f.value === '50%'));
   });
 });
 

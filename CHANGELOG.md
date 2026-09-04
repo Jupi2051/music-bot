@@ -2,10 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] — Security
+## [Unreleased]
 
 - Anti-RCE hardening: blocks queries starting with `-` (yt-dlp flag injection) and non-http(s) protocols (`file://` → LFI).
 - The yt-dlp binary no longer auto-updates at runtime: it's downloaded at build time and node_modules stays immutable in the container.
+
+### Added
+- `/set [time]` command to seek to a position in the current song (mm:ss or hh:mm:ss)
+- `/nowplaying` command, showing the current song as an embed with cover art, duration, uploader and volume
+- `/queue` now replies with an embed: song titles are clickable links to their source, each with its duration and a total queue duration in the footer
+- Shared `utils/embeds.js` styling (brand color, footer, timestamp) reused by `/queue`, `/nowplaying` and the automatic "now playing" announcement
 
 ### Fixed
 

@@ -22,8 +22,10 @@ A Discord music bot that plays music from YouTube, Spotify and SoundCloud direct
 - `/skip` - Skips to the next song
 - `/pause` - Pauses the current song
 - `/resume` - Resumes the paused song
-- `/queue` - Shows the songs in the queue
+- `/queue` - Shows the songs in the queue (as an embed, with clickable titles and durations)
+- `/nowplaying` - Shows the currently playing song (as an embed, with cover art)
 - `/volume [1-100]` - Changes the bot volume
+- `/set [time]` - Changes the playback position (mm:ss or hh:mm:ss)
 - `/leave` - Makes the bot leave the voice channel
 - `/help` - Shows the available commands
 

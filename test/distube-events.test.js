@@ -77,13 +77,20 @@ describe('config/distube', () => {
     assert.equal(distubeOptions.plugins.length, 3);
   });
 
-  test('playSong: sends the title and formatted duration to the text channel', () => {
+  test('playSong: sends a now-playing embed with title, URL and duration to the text channel', () => {
     const { channel, state } = makeChannel();
     listeners.get('playSong')(
-      { textChannel: channel },
-      { name: 'Bohemian Rhapsody', formattedDuration: '5:55' }
+      { textChannel: channel, volume: 75 },
+      { name: 'Bohemian Rhapsody', url: 'https://youtube.com/watch?v=x', formattedDuration: '5:55', thumbnail: 'https://img/x.jpg' }
     );
-    assert.equal(state.sent[0], '🎵 Now playing: **Bohemian Rhapsody** [`5:55`]');
+    const payload = state.sent[0];
+    assert.ok(Array.isArray(payload.embeds) && payload.embeds.length === 1);
+    const json = payload.embeds[0].toJSON();
+    assert.equal(json.title, 'Bohemian Rhapsody');
+    assert.equal(json.url, 'https://youtube.com/watch?v=x');
+    assert.equal(json.thumbnail.url, 'https://img/x.jpg');
+    assert.ok(json.fields.some(f => f.name === 'Duration' && f.value === '5:55'));
+    assert.ok(json.fields.some(f => f.name === 'Volume' && f.value === '75%'));
     assert.equal(state.catchAttached, true, 'send() should have .catch attached');
   });
 
