@@ -3,8 +3,13 @@
 // A tiny built-in web UI for updating cookies.txt without shelling into the
 // server. Deliberately dependency-free (Node's http module only) — the whole
 // point is to make this the *easy* path, so it shouldn't need `npm install`
-// of anything new. Token-gated because this handles YouTube session cookies:
-// whoever has the link can make the bot act as that YouTube account.
+// of anything new.
+//
+// Auth is opt-in: set COOKIE_SERVER_TOKEN to require a matching ?token= on
+// every request; leave it unset and the page is fully open to anyone who can
+// reach the port. This handles YouTube session cookies — whoever can submit
+// the form can make the bot act as that YouTube account — so if this is
+// reachable from the public internet, set COOKIE_SERVER_TOKEN.
 
 const crypto = require('crypto');
 const fs = require('fs');
@@ -46,7 +51,7 @@ function escapeHtml(str) {
 }
 
 function renderPage({ token, cookiesConfigured, status, message }) {
-  const safeToken = escapeHtml(token);
+  const tokenField = token ? `<input type="hidden" name="token" value="${escapeHtml(token)}">` : '';
   const banner = status
     ? `<p class="banner ${status}">${escapeHtml(message)}</p>`
     : '';
@@ -108,7 +113,7 @@ ${banner}
 
 <h2>Submit</h2>
 <form method="POST" action="/cookies">
-  <input type="hidden" name="token" value="${safeToken}">
+  ${tokenField}
   <p><input type="file" id="file" accept=".txt"></p>
   <p><textarea name="cookies" id="cookies" rows="12" placeholder="# Netscape HTTP Cookie File&#10;.youtube.com  TRUE  /  TRUE  0  ..."></textarea></p>
   <button type="submit">Save cookies</button>
@@ -129,7 +134,12 @@ ${banner}
 
 function startCookieServer({ port, token, cookiesPath = DEFAULT_COOKIES_PATH, configPath } = {}) {
   const resolvedPort = Number(port ?? process.env.COOKIE_SERVER_PORT ?? 8080);
-  const resolvedToken = token ?? process.env.COOKIE_SERVER_TOKEN ?? crypto.randomBytes(16).toString('hex');
+  // null means "no auth required" (see the file-level comment). Explicit
+  // `undefined` (i.e. not passed at all) falls through to the environment;
+  // an explicit `null` forces it off regardless of the environment, which
+  // tests rely on for a deterministic "no auth" mode.
+  const resolvedToken = token !== undefined ? token : (process.env.COOKIE_SERVER_TOKEN || null);
+  const authorized = (providedToken) => resolvedToken === null || timingSafeEqualStrings(providedToken, resolvedToken);
 
   const cookiesConfigured = () => {
     try {
@@ -152,7 +162,7 @@ function startCookieServer({ port, token, cookiesPath = DEFAULT_COOKIES_PATH, co
 
     if (req.method === 'GET' && url.pathname === '/') {
       const providedToken = url.searchParams.get('token');
-      if (!timingSafeEqualStrings(providedToken, resolvedToken)) {
+      if (!authorized(providedToken)) {
         res.writeHead(403, { 'Content-Type': 'text/plain' });
         res.end('Forbidden: missing or invalid token.');
         return;
@@ -183,7 +193,7 @@ function startCookieServer({ port, token, cookiesPath = DEFAULT_COOKIES_PATH, co
         const providedToken = params.get('token');
         const cookiesText = params.get('cookies') || '';
 
-        if (!timingSafeEqualStrings(providedToken, resolvedToken)) {
+        if (!authorized(providedToken)) {
           res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
           res.end(renderPage({ token: providedToken || '', cookiesConfigured: cookiesConfigured(), status: 'error', message: 'Invalid token.' }));
           return;
@@ -227,7 +237,12 @@ function startCookieServer({ port, token, cookiesPath = DEFAULT_COOKIES_PATH, co
   });
 
   server.listen(resolvedPort, () => {
-    console.log(`🍪 Cookie upload page: http://localhost:${server.address().port}/?token=${resolvedToken}`);
+    const base = `http://localhost:${server.address().port}/`;
+    if (resolvedToken === null) {
+      console.log(`🍪 Cookie upload page (NO AUTH — set COOKIE_SERVER_TOKEN to lock it down): ${base}`);
+    } else {
+      console.log(`🍪 Cookie upload page: ${base}?token=${resolvedToken}`);
+    }
   });
 
   return server;

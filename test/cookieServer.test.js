@@ -51,11 +51,11 @@ describe('timingSafeEqualStrings', () => {
 });
 
 describe('cookie server (http)', () => {
-  function withServer(t, fn) {
+  function withServer(t, fn, { token = 'test-token' } = {}) {
     return withTmpDir((dir) => {
       const cookiesPath = path.join(dir, 'cookies.txt');
       const configPath = path.join(dir, 'config');
-      const server = startCookieServer({ port: 0, token: 'test-token', cookiesPath, configPath });
+      const server = startCookieServer({ port: 0, token, cookiesPath, configPath });
       t.after(() => server.close());
       return new Promise((resolve, reject) => {
         server.on('listening', async () => {
@@ -94,6 +94,7 @@ describe('cookie server (http)', () => {
     assert.match(html, /cookie-editor\.com/);
     assert.match(html, /chromewebstore\.google\.com/);
     assert.match(html, /No cookies configured yet/);
+    assert.match(html, /name="token" value="test-token"/);
   }));
 
   test('POST /cookies without a token is forbidden and does not write the file', (t) => withServer(t, async ({ port, cookiesPath }) => {
@@ -161,4 +162,27 @@ describe('cookie server (http)', () => {
     const res = await fetch(`http://localhost:${port}/nope`);
     assert.equal(res.status, 404);
   }));
+
+  test('GET / with no token configured at all serves the form with no auth required', (t) => withServer(t, async ({ port }) => {
+    const res = await fetch(`http://localhost:${port}/`);
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    assert.match(html, /<form/);
+  }, { token: null }));
+
+  test('POST /cookies with no token configured saves the file with no token field submitted', (t) => withServer(t, async ({ port, cookiesPath }) => {
+    const res = await fetch(`http://localhost:${port}/cookies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ cookies: NETSCAPE_SAMPLE }).toString(),
+    });
+    assert.equal(res.status, 200);
+    assert.equal(fs.readFileSync(cookiesPath, 'utf8'), NETSCAPE_SAMPLE);
+  }, { token: null }));
+
+  test('the rendered form omits the hidden token field when no token is configured', (t) => withServer(t, async ({ port }) => {
+    const res = await fetch(`http://localhost:${port}/`);
+    const html = await res.text();
+    assert.doesNotMatch(html, /name="token"/);
+  }, { token: null }));
 });
