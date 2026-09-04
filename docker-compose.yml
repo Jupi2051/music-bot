@@ -8,8 +8,8 @@ services:
     env_file:
       - .env
     volumes:
-      # Cookies de YouTube (opcional): exportadas por el admin para evitar el
-      # bot-check de YouTube. Archivo ignorado por git (secreto).
+      # YouTube cookies (optional): exported by the admin to avoid YouTube's
+      # bot-check. File is gitignored (it's a secret).
       - ./cookies.txt:/app/cookies.txt:ro
     mem_limit: 1g
     cpus: 1.0
