@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - The yt-dlp binary no longer auto-updates at runtime: it's downloaded at build time and node_modules stays immutable in the container.
 
 ### Added
+- Text/prefix commands alongside slash commands: type `<prefix><command or alias> [args]` (e.g. `Chlplay`, `Chlp`, `ChlNP`) in any text channel. Prefix defaults to `Chl`, configurable via `PREFIX` in `.env`; matching is case-insensitive and space-before-command-optional. Implemented in `utils/textCommands.js`, which adapts a `Message` into a fake `Interaction` so every command's existing `execute(interaction, client)` runs unmodified — new commands automatically get a text-command form. Requires the `MessageContent` gateway intent (now requested in `index.js`) and the Message Content Intent enabled in the Discord Developer Portal.
 - `/set [time]` command to seek to a position in the current song (mm:ss or hh:mm:ss)
 - `/nowplaying` command, showing the current song as an embed with cover art, duration, uploader and volume
 - `/queue` now replies with an embed: song titles are clickable links to their source, each with its duration and a total queue duration in the footer

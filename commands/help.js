@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
+const { ALIASES, getPrefix } = require('../utils/textCommands');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,8 +20,12 @@ module.exports = {
       '`/help` - Shows this list'
     ].join('\n');
 
+    const prefix = getPrefix();
+    const example = ALIASES.play?.[0] || 'play';
+    const textCommandsHint = `Text commands also work: type \`${prefix}\` followed by a command name or alias (case-insensitive), e.g. \`${prefix}play\` or \`${prefix}${example}\`.`;
+
     await interaction.reply({
-      content: `🎵 **Available commands:**\n${musicCommands}`,
+      content: `🎵 **Available commands:**\n${musicCommands}\n\n${textCommandsHint}`,
       flags: 64
     });
   }

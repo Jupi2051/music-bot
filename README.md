@@ -29,6 +29,8 @@ A Discord music bot that plays music from YouTube, Spotify and SoundCloud direct
 - `/leave` - Makes the bot leave the voice channel
 - `/help` - Shows the available commands
 
+Every command is also available as a text command: type the prefix (default `Chl`, configurable via `PREFIX` in `.env`) followed by the command name or a short alias, case-insensitive and with no space needed — e.g. `Chlplay a song`, `ChlNP`, `chl q`. Aliases: `p` (play), `st` (stop), `s`/`next` (skip), `ps` (pause), `r`/`unpause` (resume), `q`/`list` (queue), `np`/`now` (nowplaying), `v`/`vol` (volume), `seek` (set), `l`/`dc` (leave), `h` (help). See [utils/textCommands.js](utils/textCommands.js) to add more. Requires the **Message Content Intent** enabled in the Discord Developer Portal (see below).
+
 ## Requirements
 
 - Node.js v20.18.1 or higher
@@ -86,8 +88,7 @@ The container includes a real healthcheck (heartbeat every 30s), memory/CPU limi
 4. Go to OAuth2 > URL Generator, select the "bot" and "applications.commands" scopes
 5. Select the permissions: View Channels, Send Messages, Embed Links, Read Message History, Connect, Speak
 6. Use the generated URL to invite the bot to your servers
-
-> **Intents**: the bot only needs `Guilds`, `GuildMessages` and `GuildVoiceStates` (all non-privileged). You do not need Message Content, Server Members or Presence in the portal.
+7. Under the "Bot" section, enable **Message Content Intent** — required for text/prefix commands (see [Commands](#commands)) to read message content. `Guilds`, `GuildMessages` and `GuildVoiceStates` are also needed but are non-privileged. You do not need Server Members or Presence.
 
 ## Troubleshooting
 

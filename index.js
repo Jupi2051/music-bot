@@ -37,6 +37,10 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildVoiceStates,
+    // Required to read message.content for the text/prefix commands
+    // (utils/textCommands.js). Privileged: must be enabled in the Discord
+    // Developer Portal under Bot > Message Content Intent.
+    GatewayIntentBits.MessageContent,
   ],
 });
 
