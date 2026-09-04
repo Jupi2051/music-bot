@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Links fail with `Sign in to confirm you're not a bot` (2026-09)**: YouTube's bot-check tightened further and started blocking the `player_client=android`-only workaround. `entrypoint.sh` now requests a fallback chain (`player_client=tv,web_safari,android`) instead of a single client. This is a moving target — if it stops working again, rebuild the image to pick up a newer yt-dlp (`npm run setup:ytdlp` / `docker compose build --no-cache`) or mount a `cookies.txt`, the only fully reliable fix.
 - **Links don't play (text searches do)**: @distube/yt-dlp's `download()` resolves its promise before the binary write finishes, and the Dockerfile's immediate `process.exit(0)` left a 0-byte binary in the image. Searches kept working because they go through SoundCloud (they don't use yt-dlp); links always failed.
   - The plugin patch now waits for the write and makes `json()` reject with a clear error if yt-dlp exits with no output (previously: crash from `JSON.parse('')`).
   - New `scripts/download-ytdlp.js` (`npm run setup:ytdlp`): downloads and validates the binary size; the Dockerfile uses it and fails the build if the download is incomplete.

@@ -8,9 +8,13 @@ set -e
 mkdir -p /home/nodejs/.config/yt-dlp
 # yt-dlp 2026 requires a JS runtime for full extraction
 echo "--js-runtimes node" > /home/nodejs/.config/yt-dlp/config
-# YouTube Android client: evades the "Sign in to confirm you're not a bot"
-# check that blocks the default web client (tested 2026-07)
-echo "--extractor-args youtube:player_client=android" >> /home/nodejs/.config/yt-dlp/config
+# YouTube client fallback chain: the "android"-only workaround stopped being
+# enough as YouTube's bot-check tightened (2026-09) — it now blocks with
+# "Sign in to confirm you're not a bot" even with player_client=android alone.
+# tv is currently the least-scrutinized client; listing several lets yt-dlp
+# fall back if one gets blocked. If this still fails, mount cookies.txt
+# (see the cookies check below) — that's the only fully reliable fix.
+echo "--extractor-args youtube:player_client=tv,web_safari,android" >> /home/nodejs/.config/yt-dlp/config
 # Playlist limit: radios (list=RD...) are unbounded virtual lists, and
 # without this limit extraction never finishes (bot stuck on "🔍 Searching:").
 # 15 songs max per playlist/radio (tested 2026-08, ~25s with yt-dlp's

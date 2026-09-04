@@ -53,7 +53,7 @@ integrationTest(
   '@integration: resolves a single YouTube video',
   { timeout: 90_000 },
   async () => {
-    const cleanup = withTmpYtDlpConfig(['--js-runtimes node', '--extractor-args youtube:player_client=android']);
+    const cleanup = withTmpYtDlpConfig(['--js-runtimes node', '--extractor-args youtube:player_client=tv,web_safari,android']);
     try {
       const plugin = new YtDlpPlugin({ update: false });
       const song = await plugin.resolve(
@@ -75,7 +75,7 @@ integrationTest(
   async () => {
     const cleanup = withTmpYtDlpConfig([
       '--js-runtimes node',
-      '--extractor-args youtube:player_client=android',
+      '--extractor-args youtube:player_client=tv,web_safari,android',
       '--playlist-end 25',
     ]);
     try {

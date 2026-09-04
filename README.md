@@ -92,7 +92,7 @@ The container includes a real healthcheck (heartbeat every 30s), memory/CPU limi
 
 ## Troubleshooting
 
-- **"Could not play"**: check the logs (`docker logs gordodj-bot`). If you see `Sign in to confirm you're not a bot`, YouTube is blocking the IP; the bot uses the yt-dlp `android` client to avoid it and, if needed, you can mount a `cookies.txt` (Netscape format) in the project root — the container detects it automatically.
+- **"Could not play" / `Sign in to confirm you're not a bot`**: YouTube is blocking the IP. The bot tries a fallback chain of yt-dlp player clients (`tv`, `web_safari`, `android`) to avoid this, but YouTube's bot-check keeps tightening and no client-spoofing trick is permanently reliable. First, make sure yt-dlp itself is current — rebuild the image (`docker compose build --no-cache`) or run `npm run setup:ytdlp` locally, since an outdated binary is the most common cause. If it still fails, mount a `cookies.txt` (Netscape format, exported from a logged-in YouTube session) in the project root — the container detects it automatically and this is the only fully reliable fix.
 - **Links don't work but text searches do**: the yt-dlp binary is missing or was truncated (interrupted download during a build). Searches don't use yt-dlp (they go through SoundCloud), so only links fail. The bot checks the binary on startup and warns you; fix it with `npm run setup:ytdlp` or by rebuilding the image (`docker compose build`).
 - **The bot does not respond**: verify it is `healthy` (`docker ps`) and that the `.env` token is valid.
 
