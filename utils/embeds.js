@@ -1,12 +1,16 @@
 const { EmbedBuilder, escapeMarkdown } = require('discord.js');
 
 const BRAND_COLOR = 0x8b5cf6;
+// A visibly cooler/more muted tone than BRAND_COLOR, used only for "added to
+// queue" so it reads as a lighter, secondary notification next to the bigger
+// "now playing" card rather than an identical twin of it.
+const QUEUE_ADD_COLOR = 0x64748b;
 
 // Description hard cap is 4096 chars; leave room for the "…and N more" line.
 const MAX_DESCRIPTION = 4096;
 
-function baseEmbed() {
-  return new EmbedBuilder().setColor(BRAND_COLOR).setTimestamp();
+function baseEmbed(color = BRAND_COLOR) {
+  return new EmbedBuilder().setColor(color).setTimestamp();
 }
 
 // mm:ss / h:mm:ss for a raw seconds count. Songs already carry
@@ -37,17 +41,19 @@ function sourceLabel(source) {
 }
 
 // Shared song embed: clickable title (setURL turns the whole title into a
-// hyperlink), thumbnail as cover/video art, duration and source — same shape
-// whether the song came from YouTube, Spotify or SoundCloud. `authorLabel` and
-// the extra fields are what distinguish "now playing" from "added to queue".
-function buildSongEmbed(song, { authorLabel, volume, position } = {}) {
-  const embed = baseEmbed()
-    .setAuthor({ name: authorLabel })
+// hyperlink), duration and source — same shape whether the song came from
+// YouTube, Spotify or SoundCloud. `authorLabel`/extra fields/`color`/`compact`
+// are what distinguish "now playing" (the bigger, brand-colored hero card,
+// full-size cover art) from "added to queue" (a lighter, muted-color
+// notification with just a small icon next to the author line).
+function buildSongEmbed(song, { authorLabel, volume, position, color, compact = false } = {}) {
+  const embed = baseEmbed(color)
+    .setAuthor(compact && song.thumbnail ? { name: authorLabel, iconURL: song.thumbnail } : { name: authorLabel })
     .setTitle(song.name || 'Unknown title')
     .addFields({ name: 'Duration', value: songDuration(song), inline: true });
 
   if (song.url) embed.setURL(song.url);
-  if (song.thumbnail) embed.setThumbnail(song.thumbnail);
+  if (!compact && song.thumbnail) embed.setThumbnail(song.thumbnail);
   const source = sourceLabel(song.source);
   if (source) embed.addFields({ name: 'Source', value: source, inline: true });
   if (song.uploader?.name) embed.addFields({ name: 'Uploader', value: escapeMarkdown(song.uploader.name), inline: true });
@@ -63,7 +69,7 @@ function buildNowPlayingEmbed(song, { volume } = {}) {
 }
 
 function buildAddedToQueueEmbed(song, { position } = {}) {
-  return buildSongEmbed(song, { authorLabel: '➕ Added to queue', position });
+  return buildSongEmbed(song, { authorLabel: '➕ Added to queue', position, color: QUEUE_ADD_COLOR, compact: true });
 }
 
 // Queue embed: each song title is a markdown link to its URL, followed by its
@@ -103,4 +109,4 @@ function buildQueueEmbed(queue) {
   return embed;
 }
 
-module.exports = { BRAND_COLOR, buildNowPlayingEmbed, buildAddedToQueueEmbed, buildQueueEmbed, formatDuration };
+module.exports = { BRAND_COLOR, QUEUE_ADD_COLOR, buildNowPlayingEmbed, buildAddedToQueueEmbed, buildQueueEmbed, formatDuration };

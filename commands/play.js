@@ -1,5 +1,26 @@
 const { SlashCommandBuilder, escapeMarkdown } = require('discord.js');
+const { YtDlpPlugin } = require('@distube/yt-dlp');
 const { MAX_QUEUE_SIZE, checkCooldown, cleanQuery, getQueryError, isPlaylistUrl, describePlaybackError } = require('../utils/helpers');
+
+const IS_URL = /^https?:\/\//i;
+
+// DisTube's own plain-text search step only tries plugins typed "extractor"
+// (SoundCloudPlugin is; YtDlpPlugin is "playable-extractor", so it's never
+// considered there) — meaning a bare `/play <name>` would always search
+// SoundCloud regardless of plugin order in config/distube.js. Resolve
+// directly through YtDlpPlugin instead so a plain-text query defaults to
+// YouTube, same as pasting a link would.
+async function resolveYouTubeSearch(client, query, member) {
+  const ytDlpPlugin = client.distube.plugins?.find(p => p instanceof YtDlpPlugin);
+  if (!ytDlpPlugin) return null;
+
+  // yt-dlp's ytsearchN: syntax always resolves to a playlist-shaped result,
+  // even for a single match (N=1) — unwrap it so this plays like a normal
+  // search-and-play instead of announcing a "playlist" add.
+  const resolved = await ytDlpPlugin.resolve(`ytsearch1:${query}`, { member });
+  const songs = Array.isArray(resolved?.songs) ? resolved.songs : [resolved];
+  return songs[0] || null;
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -41,7 +62,15 @@ module.exports = {
         : `🔍 Searching: \`${escapeMarkdown(query)}\``
     );
     try {
-      await client.distube.play(voiceChannel, query, {
+      let songInput = query;
+      if (!IS_URL.test(query)) {
+        // Falls back to the raw query (DisTube's own search step, currently
+        // SoundCloud) if yt-dlp genuinely found nothing — YouTube is the
+        // default, not the only source.
+        songInput = (await resolveYouTubeSearch(client, query, interaction.member)) || query;
+      }
+
+      await client.distube.play(voiceChannel, songInput, {
         textChannel: interaction.channel,
         member: interaction.member,
       });

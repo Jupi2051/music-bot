@@ -3,8 +3,8 @@ const path = require('path');
 const MAX_QUEUE_SIZE = 100;
 
 // Reasonable minimum size for the yt-dlp binary (~3MB in practice). Less than
-// this = truncated/empty download: the symptom is that searches still work
-// (they go through SoundCloud) but LINKS fail (yt-dlp can't run).
+// this = truncated/empty download: yt-dlp can't run, so both plain-text
+// searches (default to YouTube, see commands/play.js) and links fail.
 const YT_DLP_MIN_BYTES = 1024 * 1024;
 
 // Stores `{ at: timestamp }` per key so expired entries can be pruned and the

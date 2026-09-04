@@ -90,7 +90,7 @@ El contenedor incluye healthcheck real (heartbeat cada 30s), límites de memoria
 ## Solución de problemas
 
 - **"No se pudo reproducir"**: revisá los logs (`docker logs gordodj-bot`). Si aparece `Sign in to confirm you're not a bot`, YouTube está bloqueando la IP; el bot usa el cliente `android` de yt-dlp para evitarlo y, si es necesario, podés montar `cookies.txt` (formato Netscape) en la raíz del proyecto — el contenedor lo detecta automáticamente.
-- **Los enlaces no funcionan pero las búsquedas por texto sí**: el binario de yt-dlp falta o quedó truncado (descarga interrumpida durante un build). Las búsquedas no usan yt-dlp (van por SoundCloud), por eso solo fallan los enlaces. El bot verifica el binario al arrancar y avisa; para arreglarlo corré `npm run setup:ytdlp` o recontruí la imagen (`docker compose build`).
+- **No reproduce nada, ni siquiera una búsqueda de texto**: el binario de yt-dlp falta o quedó truncado (descarga interrumpida durante un build). Tanto los enlaces como las búsquedas de texto (que por defecto van por YouTube) dependen de él. El bot verifica el binario al arrancar y avisa; para arreglarlo corré `npm run setup:ytdlp` o recontruí la imagen (`docker compose build`).
 - **El bot no responde**: verificá que esté `healthy` (`docker ps`) y que el token del `.env` sea válido.
 
 ## Dependencias

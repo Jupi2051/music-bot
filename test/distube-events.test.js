@@ -107,7 +107,7 @@ describe('config/distube', () => {
     assert.equal(json.author.name, '➕ Added to queue');
     assert.equal(json.title, 'Song X');
     assert.equal(json.url, 'https://youtube.com/watch?v=x');
-    assert.equal(json.thumbnail.url, 'https://img/x.jpg');
+    assert.equal(json.author.icon_url, 'https://img/x.jpg');
     assert.ok(json.fields.some(f => f.name === 'Duration' && f.value === '2:40'));
     assert.ok(json.fields.some(f => f.name === 'Source' && f.value === 'Spotify'));
     assert.ok(json.fields.some(f => f.name === 'Position in queue' && f.value === '2'));

@@ -7,8 +7,8 @@ if (!process.env.TOKEN) {
   process.exit(1);
 }
 
-// Fail-fast: without a valid yt-dlp binary, text searches keep working
-// (they go through SoundCloud) but LINKS fail with confusing errors mid-session.
+// Fail-fast: without a valid yt-dlp binary, both plain-text searches
+// (default to YouTube) and links fail with confusing errors mid-session.
 // Detect it on startup with an actionable message.
 const { statSync } = require("fs");
 const { evaluateYtDlpBinary, ytDlpBinaryPath } = require("./utils/helpers");

@@ -100,13 +100,28 @@ describe('buildAddedToQueueEmbed', () => {
     const json = buildAddedToQueueEmbed(song({ source: 'spotify', thumbnail: 'https://img/cover.jpg' }), { position: 1 }).toJSON();
     assert.equal(json.title, 'Never Gonna Give You Up');
     assert.equal(json.url, song().url);
-    assert.equal(json.thumbnail.url, 'https://img/cover.jpg');
     assert.ok(json.fields.some(f => f.name === 'Source' && f.value === 'Spotify'));
   });
 
   test('omits the position field when none is given', () => {
     const json = buildAddedToQueueEmbed(song()).toJSON();
     assert.ok(!json.fields.some(f => f.name === 'Position in queue'));
+  });
+
+  test('is visually distinct from buildNowPlayingEmbed: different color, and a small author icon instead of a big thumbnail', () => {
+    const withThumbnail = song({ thumbnail: 'https://img/cover.jpg' });
+    const nowPlaying = buildNowPlayingEmbed(withThumbnail).toJSON();
+    const addedToQueue = buildAddedToQueueEmbed(withThumbnail).toJSON();
+
+    assert.notEqual(addedToQueue.color, nowPlaying.color);
+    assert.equal(nowPlaying.thumbnail.url, 'https://img/cover.jpg');
+    assert.equal(addedToQueue.thumbnail, undefined);
+    assert.equal(addedToQueue.author.icon_url, 'https://img/cover.jpg');
+  });
+
+  test('omits the author icon when the song has no thumbnail', () => {
+    const json = buildAddedToQueueEmbed(song()).toJSON();
+    assert.equal(json.author.icon_url, undefined);
   });
 });
 

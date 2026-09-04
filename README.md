@@ -17,7 +17,7 @@ A Discord music bot that plays music from YouTube, Spotify and SoundCloud direct
 
 ## Commands
 
-- `/play [song]` - Plays a song or playlist (URL or text search)
+- `/play [song]` - Plays a song or playlist (URL, or a plain-text search — defaults to YouTube; paste a direct Spotify/SoundCloud link to use those instead)
 - `/stop` - Stops playback and leaves the voice channel
 - `/skip` - Skips to the next song
 - `/pause` - Pauses the current song
@@ -115,7 +115,7 @@ Cookies expire/rotate, so you may need to redo this occasionally.
 ## Troubleshooting
 
 - **"Could not play" / `Sign in to confirm you're not a bot`**: see [YouTube cookies](#youtube-cookies-fixing-the-bot-check) above. The bot also tries a fallback chain of yt-dlp player clients (`tv`, `web_safari`, `android`) to reduce how often this happens, but YouTube's bot-check keeps tightening and no client-spoofing trick is permanently reliable — cookies are the only fully reliable fix. Also make sure yt-dlp itself is current (`npm run setup:ytdlp` or `docker compose build --no-cache`); an outdated binary is the next most common cause.
-- **Links don't work but text searches do**: the yt-dlp binary is missing or was truncated (interrupted download during a build). Searches don't use yt-dlp (they go through SoundCloud), so only links fail. The bot checks the binary on startup and warns you; fix it with `npm run setup:ytdlp` or by rebuilding the image (`docker compose build`).
+- **Nothing plays at all, not even a plain-text search**: the yt-dlp binary is missing or was truncated (interrupted download during a build). Both links and plain-text search (which defaults to YouTube) depend on it. The bot checks the binary on startup and warns you; fix it with `npm run setup:ytdlp` or by rebuilding the image (`docker compose build`).
 - **The bot does not respond**: verify it is `healthy` (`docker ps`) and that the `.env` token is valid.
 
 ## Dependencies

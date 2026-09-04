@@ -11,6 +11,7 @@
 const { test, describe, mock } = require('node:test');
 const assert = require('node:assert/strict');
 
+const { YtDlpPlugin } = require('@distube/yt-dlp');
 const play = require('../commands/play');
 const skip = require('../commands/skip');
 const stop = require('../commands/stop');
@@ -64,14 +65,24 @@ function makeQueue(overrides = {}) {
   };
 }
 
-function makeClient({ queue = null, connection = null } = {}) {
+function makeClient({ queue = null, connection = null, plugins } = {}) {
   return {
     distube: {
       getQueue: mock.fn(() => queue),
       play: mock.fn(async () => {}),
       voices: { get: mock.fn(() => connection) },
+      ...(plugins ? { plugins } : {}),
     },
   };
+}
+
+// Object.create(YtDlpPlugin.prototype) satisfies `instanceof YtDlpPlugin`
+// without invoking the real constructor (which would try to download the
+// yt-dlp binary), so play.js's plugin lookup works against a plain mock.
+function makeYtDlpPlugin(resolveImpl) {
+  const plugin = Object.create(YtDlpPlugin.prototype);
+  plugin.resolve = mock.fn(resolveImpl);
+  return plugin;
 }
 
 function replyArg(interaction, callIndex = 0) {
@@ -440,6 +451,67 @@ describe('play', () => {
     assert.equal(query, 'test query');
     assert.equal(options.textChannel, interaction.channel);
     assert.equal(options.member, interaction.member);
+  });
+
+  test('resolves a plain-text query through YtDlpPlugin (YouTube) and passes the unwrapped song to distube.play', async () => {
+    const song = { name: 'Never Gonna Give You Up', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' };
+    // yt-dlp's ytsearchN: syntax always resolves to a playlist-shaped result,
+    // even for a single match — the plugin lookup must unwrap it.
+    const ytDlpPlugin = makeYtDlpPlugin(async () => ({ songs: [song] }));
+    const interaction = makeInteraction({ guildId: 'guild-play-yt-search' });
+    const client = makeClient({ plugins: [ytDlpPlugin] });
+
+    await play.execute(interaction, client);
+
+    assert.equal(ytDlpPlugin.resolve.mock.calls.length, 1);
+    const [searchArg, resolveOptions] = ytDlpPlugin.resolve.mock.calls[0].arguments;
+    assert.equal(searchArg, 'ytsearch1:test query');
+    assert.equal(resolveOptions.member, interaction.member);
+
+    const [, songArg] = client.distube.play.mock.calls[0].arguments;
+    assert.equal(songArg, song);
+  });
+
+  test('falls back to the raw query if YtDlpPlugin finds no results', async () => {
+    const ytDlpPlugin = makeYtDlpPlugin(async () => ({ songs: [] }));
+    const interaction = makeInteraction({ guildId: 'guild-play-yt-empty' });
+    const client = makeClient({ plugins: [ytDlpPlugin] });
+
+    await play.execute(interaction, client);
+
+    const [, songArg] = client.distube.play.mock.calls[0].arguments;
+    assert.equal(songArg, 'test query');
+  });
+
+  test('does not attempt a YouTube search for a URL query, even with YtDlpPlugin available', async () => {
+    const ytDlpPlugin = makeYtDlpPlugin(async () => ({ songs: [] }));
+    const interaction = makeInteraction({
+      guildId: 'guild-play-yt-url',
+      options: { getString: () => 'https://www.youtube.com/watch?v=eBqthnZnu3Y' },
+    });
+    const client = makeClient({ plugins: [ytDlpPlugin] });
+
+    await play.execute(interaction, client);
+
+    assert.equal(ytDlpPlugin.resolve.mock.calls.length, 0);
+    const [, songArg] = client.distube.play.mock.calls[0].arguments;
+    assert.equal(songArg, 'https://www.youtube.com/watch?v=eBqthnZnu3Y');
+  });
+
+  test('propagates a YtDlpPlugin.resolve() error (e.g. bot-check) through the normal error handling', async (t) => {
+    mock.method(console, 'error', () => {});
+    t.after(() => mock.restoreAll());
+    const ytDlpPlugin = makeYtDlpPlugin(async () => {
+      throw new Error("Sign in to confirm you're not a bot.");
+    });
+    const interaction = makeInteraction({ guildId: 'guild-play-yt-error' });
+    const client = makeClient({ plugins: [ytDlpPlugin] });
+
+    await play.execute(interaction, client);
+
+    assert.equal(client.distube.play.mock.calls.length, 0);
+    const arg = interaction.editReply.mock.calls[0].arguments[0];
+    assert.match(arg, /bot-check/);
   });
 
   test('extracts the URL if the user pasted the bot message text', async () => {

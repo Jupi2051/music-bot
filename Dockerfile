@@ -37,7 +37,8 @@ RUN npm ci && npx patch-package && npm prune --omit=dev && npm cache clean --for
 # if an attack managed to inject flags (--update-to), there would be no
 # replaceable binary = no RCE. The script fails the build if the download
 # comes out truncated: previously, the immediate process.exit() left a
-# 0-byte binary and links didn't work (searches did, they go through SoundCloud).
+# 0-byte binary — links didn't work then, and now search doesn't either
+# (both default to yt-dlp/YouTube, see commands/play.js).
 RUN node scripts/download-ytdlp.js
 
 # Set ownership AFTER npm ci and the binary download. ONLY the root of /app

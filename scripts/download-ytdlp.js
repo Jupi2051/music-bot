@@ -8,8 +8,10 @@
 // the internal writeFile finishes (upstream bug in 2.0.1, patched in
 // patches/). An immediate `process.exit()` — like the Dockerfile used to do —
 // killed the process mid-write and left a 0-byte binary: the bot started
-// normally, text searches worked (they go through SoundCloud) but LINKS
-// always failed. This script waits for the write and validates the size.
+// normally but every yt-dlp invocation failed (at the time, that only broke
+// links — text search fell back to SoundCloud; now search defaults to
+// YouTube too, via commands/play.js, so a broken binary breaks both). This
+// script waits for the write and validates the size.
 //
 // Usage: `npm run setup:ytdlp` (local) or `RUN node scripts/download-ytdlp.js`
 // in the Dockerfile (fails the build if the download is incomplete).

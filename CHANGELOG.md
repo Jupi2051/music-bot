@@ -13,8 +13,11 @@ All notable changes to this project will be documented in this file.
 - `/set [time]` command to seek to a position in the current song (mm:ss or hh:mm:ss)
 - `/nowplaying` command, showing the current song as an embed with cover art, duration, uploader and volume
 - `/queue` now replies with an embed: song titles are clickable links to their source, each with its duration and a total queue duration in the footer
-- The "added to queue" announcement is now an embed too (title link, thumbnail, duration, source, queue position), matching the "now playing" one — works the same regardless of source (YouTube, Spotify, SoundCloud)
+- The "added to queue" announcement is now an embed too (title link, duration, source, queue position), matching the "now playing" one — works the same regardless of source (YouTube, Spotify, SoundCloud). Styled as a lighter, secondary notification next to "now playing": a muted color and a small author icon instead of the big cover-art thumbnail.
 - Shared `utils/embeds.js` styling (brand color, footer, timestamp) reused by `/queue`, `/nowplaying` and the automatic "now playing"/"added to queue" announcements
+
+### Changed
+- `/play` with a plain-text query (not a URL) now defaults to YouTube instead of SoundCloud. DisTube's own search step only considers plugins typed `"extractor"` — SoundCloud is the only one configured that qualifies (`@distube/yt-dlp`'s is `"playable-extractor"`, never eligible there regardless of plugin order), which is why text search always went through SoundCloud before. `commands/play.js` now resolves plain-text queries directly through `YtDlpPlugin` (yt-dlp's own `ytsearchN:` syntax) and hands DisTube the resolved song, falling back to the old SoundCloud-search path only if yt-dlp genuinely finds nothing. Direct URLs (YouTube/Spotify/SoundCloud links) are unaffected. Trade-off: search now depends on yt-dlp/YouTube being reachable, same as links — previously a YouTube outage only broke links while text search kept working via SoundCloud.
 
 ### Fixed
 
