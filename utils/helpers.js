@@ -112,6 +112,13 @@ function buildYtDlpConfig({ cookiesExist, cookiesPath } = {}) {
     '--js-runtimes node',
     '--extractor-args youtube:player_client=tv,web_safari,android',
     '--playlist-end 15',
+    // The tv/web_safari clients serve audio as HLS (m3u8) by default, which
+    // ffmpeg doesn't always demux from the true start — playback ends up a
+    // few seconds in. android's format is a clean progressive https file
+    // that starts exactly at 0; this sort preference picks that over HLS
+    // whenever both are available, without dropping tv/web_safari from the
+    // client list above (still needed for the bot-check fallback chain).
+    '--format-sort proto:https',
   ];
   if (cookiesExist && cookiesPath) lines.push(`--cookies ${cookiesPath}`);
   return `${lines.join('\n')}\n`;

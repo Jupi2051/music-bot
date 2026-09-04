@@ -157,6 +157,11 @@ describe('buildYtDlpConfig', () => {
     assert.match(config, /--playlist-end 15/);
   });
 
+  test('prefers https-protocol formats over HLS so playback starts at 0 (tv/web_safari serve HLS by default)', () => {
+    const config = buildYtDlpConfig({ cookiesExist: false });
+    assert.match(config, /--format-sort proto:https/);
+  });
+
   test('omits --cookies when cookiesExist is false', () => {
     const config = buildYtDlpConfig({ cookiesExist: false, cookiesPath: '/app/cookies.txt' });
     assert.doesNotMatch(config, /--cookies/);
