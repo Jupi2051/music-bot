@@ -4,41 +4,41 @@ const { MAX_QUEUE_SIZE, checkCooldown, cleanQuery, getQueryError, isPlaylistUrl 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Reproduce una canción o playlist')
+    .setDescription('Plays a song or playlist')
     .addStringOption(option =>
-      option.setName('cancion')
-        .setDescription('Nombre o URL')
+      option.setName('song')
+        .setDescription('Name or URL')
         .setRequired(true)
     ),
   async execute(interaction, client) {
-    const query = cleanQuery(interaction.options.getString('cancion'));
-    // Hardening anti-RCE: bloquear queries que empiecen con "-" (inyección de
-    // flags de yt-dlp) o usen protocolos no-http(s) (LFI vía file://).
+    const query = cleanQuery(interaction.options.getString('song'));
+    // Anti-RCE hardening: block queries that start with "-" (yt-dlp flag
+    // injection) or use non-http(s) protocols (LFI via file://).
     const queryError = getQueryError(query);
     if (queryError) return interaction.reply({ content: queryError, ephemeral: true });
     const voiceChannel = interaction.member?.voice?.channel;
-    // En DMs `interaction.member` es null; dar mensaje claro en vez de TypeError
-    if (!interaction.member) return interaction.reply({ content: '❌ Este comando solo funciona en servidores.', ephemeral: true });
-    if (!voiceChannel) return interaction.reply({ content: '❌ Debes estar en un canal de voz.', ephemeral: true });
+    // `interaction.member` is null in DMs; give a clear message instead of a TypeError
+    if (!interaction.member) return interaction.reply({ content: '❌ This command only works in servers.', ephemeral: true });
+    if (!voiceChannel) return interaction.reply({ content: '❌ You must be in a voice channel.', ephemeral: true });
 
     const key = `${interaction.guildId}:${interaction.user.id}`;
     if (checkCooldown(key, 5000)) {
-      return interaction.reply({ content: '⏳ Esperá unos segundos antes de pedir otra canción.', ephemeral: true });
+      return interaction.reply({ content: '⏳ Wait a few seconds before requesting another song.', ephemeral: true });
     }
 
     const queue = client.distube.getQueue(interaction);
     if (queue && queue.songs.length >= MAX_QUEUE_SIZE) {
-      return interaction.reply({ content: `❌ La cola está llena (máximo ${MAX_QUEUE_SIZE} canciones).`, ephemeral: true });
+      return interaction.reply({ content: `❌ The queue is full (max ${MAX_QUEUE_SIZE} songs).`, ephemeral: true });
     }
 
-    // Las playlists/álbumes tardan en resolverse canción por canción
-    // (yt-dlp extrae secuencialmente; probado: ~1.5s por canción). Mostrar
-    // "cargando playlist" en vez de "buscando" para que no parezca colgado.
+    // Playlists/albums take time to resolve song by song (yt-dlp extracts
+    // sequentially; measured: ~1.5s per song). Show "loading playlist" instead
+    // of the generic "searching" so the resolution wait doesn't look like a hang.
     const isPlaylist = isPlaylistUrl(query);
     await interaction.reply(
       isPlaylist
-        ? `📃 Cargando playlist: \`${escapeMarkdown(query)}\`. Lleva unos segundos...`
-        : `🔍 Buscando: \`${escapeMarkdown(query)}\``
+        ? `📃 Loading playlist: \`${escapeMarkdown(query)}\`. This takes a few seconds...`
+        : `🔍 Searching: \`${escapeMarkdown(query)}\``
     );
     try {
       await client.distube.play(voiceChannel, query, {
@@ -46,9 +46,9 @@ module.exports = {
         member: interaction.member,
       });
     } catch (error) {
-      console.error('Error al reproducir:', error);
+      console.error('Error playing:', error);
       await interaction
-        .editReply('❌ No se pudo reproducir. Probá con otro nombre o URL.')
+        .editReply('❌ Could not play. Try another name or URL.')
         .catch(() => {});
     }
   },

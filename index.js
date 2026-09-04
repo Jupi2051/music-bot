@@ -1,13 +1,13 @@
 require('dotenv').config();
 
 if (!process.env.TOKEN) {
-  console.error('❌ Falta la variable de entorno TOKEN. Configurá el archivo .env (ver .env.example).');
+  console.error('❌ Missing TOKEN environment variable. Set up the .env file (see .env.example).');
   process.exit(1);
 }
 
-// Fail-fast: sin un binario de yt-dlp válido, las búsquedas por texto siguen
-// funcionando (van por SoundCloud) pero los ENLACES fallan con errores
-// confusos a mitad de sesión. Detectarlo al arranque con mensaje accionable.
+// Fail-fast: without a valid yt-dlp binary, text searches keep working
+// (they go through SoundCloud) but LINKS fail with confusing errors mid-session.
+// Detect it on startup with an actionable message.
 const { statSync } = require('fs');
 const { evaluateYtDlpBinary, ytDlpBinaryPath } = require('./utils/helpers');
 const ytdlpPath = ytDlpBinaryPath();
@@ -15,7 +15,7 @@ let ytdlpStat = null;
 try {
   ytdlpStat = statSync(ytdlpPath);
 } catch {
-  // ENOENT: el veredicto lo reporta como faltante
+  // ENOENT: the verdict reports it as missing
 }
 const ytdlpVerdict = evaluateYtDlpBinary({ exists: ytdlpStat !== null, size: ytdlpStat?.size });
 if (!ytdlpVerdict.ok) {
@@ -42,7 +42,7 @@ const client = new Client({
 
 client.commands = new Collection();
 
-// Manejo global de errores para evitar crashes silenciosos
+// Global error handling to avoid silent crashes
 process.on('unhandledRejection', (reason) => {
   console.error('Unhandled rejection:', reason);
 });
@@ -56,15 +56,15 @@ client.on('error', (err) => {
   console.error('Error del cliente Discord:', err);
 });
 
-// Cargar comandos
+// Load commands
 const commandsPath = path.join(__dirname, 'commands');
 for (const file of fs.readdirSync(commandsPath)) {
-  if (!file.endsWith('.js')) continue; // ignorar archivos no-comando (evita crash loop)
+  if (!file.endsWith('.js')) continue; // ignore non-command files (avoids crash loop)
   const command = require(path.join(commandsPath, file));
   client.commands.set(command.data.name, command);
 }
 
-// Cargar eventos de Discord
+// Load Discord events
 const eventsPath = path.join(__dirname, 'events');
 for (const file of fs.readdirSync(eventsPath)) {
   const event = require(path.join(eventsPath, file));
@@ -75,26 +75,26 @@ for (const file of fs.readdirSync(eventsPath)) {
   }
 }
 
-// Instanciar DisTube con la configuración avanzada
+// Instantiate DisTube with the advanced configuration
 require('./config/distube')(client);
 
-// Estado del bot y actualización de comandos
+// Bot status and command updates
 client.on('clientReady', async () => {
-  // Establecer estado del bot
+  // Set bot status
   client.user.setPresence({
-    activities: [{ 
-      name: '/help | Música para Discord', 
-      type: ActivityType.Listening 
+    activities: [{
+      name: '/help | Music for Discord',
+      type: ActivityType.Listening
     }],
     status: 'online'
   });
-  
-  // Verificar y actualizar comandos si es necesario
+
+  // Check and update commands if necessary
   await checkAndUpdateCommands();
 
-  // Actualización periódica de comandos (cada 6 horas) con guard
-  // anti-solapamiento: si una actualización tarda más de 6h (API lenta o
-  // bloqueo), la siguiente ejecución se saltea en vez de pisarse.
+  // Periodic command update (every 6 hours) with an anti-overlap guard: if an
+  // update takes longer than 6h (slow API or a stuck request), the next run
+  // is skipped instead of overlapping.
   let isUpdating = false;
   setInterval(async () => {
     if (isUpdating) return;
@@ -106,7 +106,7 @@ client.on('clientReady', async () => {
     }
   }, 6 * 60 * 60 * 1000);
 
-  // Heartbeat para el healthcheck del contenedor (escribe bot-state.json cada 30s)
+  // Heartbeat for the container healthcheck (writes bot-state.json every 30s)
   const writeHeartbeat = () => {
     const state = {
       lastUpdate: Date.now(),
@@ -116,7 +116,7 @@ client.on('clientReady', async () => {
     try {
       fs.writeFileSync(path.join(__dirname, 'bot-state.json'), JSON.stringify(state));
     } catch (err) {
-      console.error('Error al escribir bot-state.json:', err);
+      console.error('Error writing bot-state.json:', err);
     }
   };
   writeHeartbeat();
@@ -124,6 +124,6 @@ client.on('clientReady', async () => {
 });
 
 client.login(process.env.TOKEN).catch((err) => {
-  console.error('❌ No se pudo conectar con Discord:', err.message);
+  console.error('❌ Could not connect to Discord:', err.message);
   process.exit(1);
 });

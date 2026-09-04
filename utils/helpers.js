@@ -2,20 +2,20 @@ const path = require('path');
 
 const MAX_QUEUE_SIZE = 100;
 
-// Tamaño mínimo razonable del binario de yt-dlp (~3MB real). Menos que esto
-// = descarga truncada/vacía: el síntoma es que las búsquedas funcionan (van
-// por SoundCloud) pero los ENLACES fallan (yt-dlp no puede ejecutarse).
+// Reasonable minimum size for the yt-dlp binary (~3MB in practice). Less than
+// this = truncated/empty download: the symptom is that searches still work
+// (they go through SoundCloud) but LINKS fail (yt-dlp can't run).
 const YT_DLP_MIN_BYTES = 1024 * 1024;
 
-// Guarda `{ at: timestamp }` por key para limpiar entradas vencidas y evitar
-// que el Map crezca sin límite en servidores con mucho uso.
+// Stores `{ at: timestamp }` per key so expired entries can be pruned and the
+// Map doesn't grow unbounded on busy servers.
 const cooldowns = new Map();
 
 function checkCooldown(key, ms) {
   const now = Date.now();
 
-  // Podar entradas vencidas: se recorre solo el Map, que es chico en la
-  // práctica (una key por canal/acción). Evita leaks de memoria.
+  // Prune expired entries: only the Map is scanned, which stays small in
+  // practice (one key per channel/action). Avoids memory leaks.
   for (const [storedKey, entry] of cooldowns) {
     if (now - entry.at >= ms) cooldowns.delete(storedKey);
   }
@@ -28,23 +28,23 @@ function checkCooldown(key, ms) {
 
 function assertControl(interaction, botChannelId) {
   const memberChannel = interaction.member?.voice?.channel;
-  if (!memberChannel) return '❌ Debes estar en un canal de voz.';
+  if (!memberChannel) return '❌ You must be in a voice channel.';
   if (botChannelId && memberChannel.id !== botChannelId) {
-    return '❌ Debes estar en el mismo canal de voz que el bot.';
+    return '❌ You must be in the same voice channel as the bot.';
   }
   return null;
 }
 
-// Normaliza el query del usuario. Si pegó el texto del mensaje del bot
-// (ej: `🔍 Buscando: \`https://...\``) o una URL envuelta en backticks,
-// extrae la URL real. Si no hay URL, devuelve el texto limpio.
+// Normalizes the user's query. If they pasted the bot's own message text
+// (e.g. `🔍 Searching: \`https://...\``) or a URL wrapped in backticks,
+// extracts the real URL. If there's no URL, returns the cleaned text.
 function cleanQuery(raw) {
   if (typeof raw !== 'string') return '';
   let text = raw.trim();
   const urlMatch = text.match(/https?:\/\/[^\s'`"<>]+/);
   if (urlMatch) {
-    // Recortar puntuación de cierre pegada a la URL (ej: "https://...youtube.com/watch?v=x).")
-    // que los usuarios suelen incluir al copiar desde el chat o el navegador.
+    // Trim trailing punctuation stuck to the URL (e.g. "https://...youtube.com/watch?v=x).")
+    // that users often include when copying from chat or the browser.
     return urlMatch[0].replace(/[.,;:!?)]+$/, '');
   }
   if (text.length > 1 && text.startsWith('`') && text.endsWith('`')) {
@@ -53,41 +53,41 @@ function cleanQuery(raw) {
   return text;
 }
 
-// Detecta si una query es una URL de playlist/álbum/radio (YouTube, Spotify,
-// SoundCloud) para mostrar el mensaje de carga adecuado. El set es explícito:
-// agregar una fuente nueva acá actualiza tanto este check como la UX.
+// Detects whether a query is a playlist/album/radio URL (YouTube, Spotify,
+// SoundCloud) to show the appropriate loading message. The set is explicit:
+// adding a new source here updates both this check and the UX.
 function isPlaylistUrl(raw) {
   if (typeof raw !== 'string') return false;
   return /(youtube\.com|youtu\.be).*(playlist|list=)|open\.spotify\.com\/(playlist|album)|soundcloud\.com\/[^/]+\/sets\//.test(raw);
 }
 
-// Devuelve un mensaje de error si el query es inseguro (null si es seguro).
-// Seguridad: bloquea inyección de flags de yt-dlp (queries que empiezan con "-")
-// y protocolos no-http(s) (LFI vía file://).
+// Returns an error message if the query is unsafe (null if it's safe).
+// Security: blocks yt-dlp flag injection (queries starting with "-")
+// and non-http(s) protocols (LFI via file://).
 function getQueryError(query) {
-  if (typeof query !== 'string' || !query.trim()) return '❌ Ingresá un nombre o URL.';
-  if (query.startsWith('-')) return '❌ Ese término de búsqueda no es válido.';
+  if (typeof query !== 'string' || !query.trim()) return '❌ Enter a name or URL.';
+  if (query.startsWith('-')) return '❌ That search term is not valid.';
   const protocolMatch = query.match(/^[a-z][a-z0-9+.-]*:\/\//i);
-  if (protocolMatch && !/^https?:\/\//i.test(query)) return '❌ Solo se admiten enlaces http(s).';
+  if (protocolMatch && !/^https?:\/\//i.test(query)) return '❌ Only http(s) links are supported.';
   return null;
 }
 
-// Veredicto puro sobre el binario de yt-dlp (testeable sin fs), mismo patrón
-// que evaluateHealth en healthcheck.js. Se usa para fallar rápido al arrancar
-// con un mensaje accionable en vez de fallar por enlace a mitad de sesión.
+// Pure verdict on the yt-dlp binary (testable without fs), same pattern as
+// evaluateHealth in healthcheck.js. Used to fail fast on startup with an
+// actionable message instead of failing on a link mid-session.
 function evaluateYtDlpBinary({ exists, size }) {
-  const fix = 'Arreglalo con `npm run setup:ytdlp` (local) o recontruyendo la imagen (`docker compose build`) en Docker.';
+  const fix = 'Fix it with `npm run setup:ytdlp` (local) or by rebuilding the image (`docker compose build`) in Docker.';
   if (!exists) {
-    return { ok: false, reason: `❌ Falta el binario de yt-dlp (${fix})` };
+    return { ok: false, reason: `❌ Missing yt-dlp binary (${fix})` };
   }
   if (!Number.isFinite(size) || size < YT_DLP_MIN_BYTES) {
-    return { ok: false, reason: `❌ El binario de yt-dlp está vacío o truncado (${size ?? 'tamaño desconocido'} bytes). ${fix}` };
+    return { ok: false, reason: `❌ The yt-dlp binary is empty or truncated (${size ?? 'unknown size'} bytes). ${fix}` };
   }
   return { ok: true };
 }
 
-// Resuelve la ruta del binario de yt-dlp igual que lo hace @distube/yt-dlp
-// internamente (env.ts): honra YTDLP_DIR/YTDLP_FILENAME para no divergir.
+// Resolves the yt-dlp binary path the same way @distube/yt-dlp does
+// internally (env.ts): honors YTDLP_DIR/YTDLP_FILENAME to avoid diverging.
 function ytDlpBinaryPath() {
   const dir = process.env.YTDLP_DIR || path.join(path.dirname(require.resolve('@distube/yt-dlp')), '..', 'bin');
   const filename = process.env.YTDLP_FILENAME || `yt-dlp${process.platform === 'win32' ? '.exe' : ''}`;

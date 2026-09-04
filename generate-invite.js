@@ -1,30 +1,30 @@
 require('dotenv').config();
 
-// En open source cada quien usa su propia aplicación: CLIENT_ID es obligatorio
-// (está en el .env). Sin él no hay forma de armar un link válido.
+// In open source, everyone runs their own application: CLIENT_ID is required
+// (it's in .env). Without it there's no way to build a valid link.
 if (!process.env.CLIENT_ID) {
-  console.error('❌ Falta CLIENT_ID en el .env. Configurá tu propia app de Discord (ver README).');
+  console.error('❌ Missing CLIENT_ID in .env. Set up your own Discord app (see README).');
   process.exit(1);
 }
 const CLIENT_ID = process.env.CLIENT_ID;
 
-// Permisos necesarios para el bot de música (slash commands van por el scope
-// applications.commands, no por el permiso):
-// 1024     = Ver canales
-// 2048     = Enviar mensajes
-// 16384    = Insertar enlaces
-// 65536    = Leer historial de mensajes
-// 1048576  = Conectar a voz
-// 2097152  = Hablar
+// Permissions the music bot needs (slash commands go through the
+// applications.commands scope, not a permission):
+// 1024     = View Channels
+// 2048     = Send Messages
+// 16384    = Embed Links
+// 65536    = Read Message History
+// 1048576  = Connect
+// 2097152  = Speak
 const PERMISSIONS = '1024+2048+16384+65536+1048576+2097152';
 
-// Crear URL de invitación
+// Build invite URL
 const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&permissions=${PERMISSIONS}&scope=bot%20applications.commands`;
 
 console.log('='.repeat(50));
-console.log('🎵 GordoDJ - Enlace de invitación del bot');
+console.log('🎵 GordoDJ - Bot invite link');
 console.log('='.repeat(50));
 console.log(`\n${inviteUrl}\n`);
 console.log('='.repeat(50));
-console.log('Comparte este enlace para invitar al bot a otros servidores');
+console.log('Share this link to invite the bot to other servers');
 console.log('='.repeat(50));

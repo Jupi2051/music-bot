@@ -1,13 +1,12 @@
 'use strict';
 
-// Tests de config/distube.js. Se intercepta require('distube') y los plugins
-// con clases falsas que capturan los listeners `.on(evento, cb)` en un Map;
-// luego se invocan los handlers con payloads simulados.
+// Tests for config/distube.js. Intercepts require('distube') and its plugins
+// with fake classes that capture the `.on(event, cb)` listeners in a Map;
+// the handlers are then invoked with simulated payloads.
 //
-// NOT TESTABLE: el comportamiento real de DisTube (streams, conexiones de voz)
-// y los plugins de YouTube/Spotify/SoundCloud: requerirían la instancia real.
-// Aquí solo se verifican las transformaciones de mensajes y los guards del
-// factory.
+// NOT TESTABLE: real DisTube behavior (streams, voice connections) and the
+// YouTube/Spotify/SoundCloud plugins: would require the real instance. Only
+// message transformations and the factory's guards are verified here.
 
 const { test, describe, mock, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
@@ -49,7 +48,7 @@ function makeChannel() {
     channel: {
       send(message) {
         state.sent.push(message);
-        // El factory adjunta .catch al retorno de send(): se registra acá
+        // The factory attaches .catch to the return value of send(): recorded here
         return {
           catch() {
             state.catchAttached = true;
@@ -72,55 +71,55 @@ describe('config/distube', () => {
     setupDistube(client);
   });
 
-  test('registra la instancia en client.distube con la configuración base', () => {
+  test('registers the instance on client.distube with the base configuration', () => {
     assert.equal(client.distube, distubeInstance);
     assert.equal(distubeOptions.emitNewSongOnly, true);
     assert.equal(distubeOptions.plugins.length, 3);
   });
 
-  test('playSong: envía el título y duración formateada al canal de texto', () => {
+  test('playSong: sends the title and formatted duration to the text channel', () => {
     const { channel, state } = makeChannel();
     listeners.get('playSong')(
       { textChannel: channel },
       { name: 'Bohemian Rhapsody', formattedDuration: '5:55' }
     );
-    assert.equal(state.sent[0], '🎵 Reproduciendo: **Bohemian Rhapsody** [`5:55`]');
-    assert.equal(state.catchAttached, true, 'send() debe tener .catch adjunto');
+    assert.equal(state.sent[0], '🎵 Now playing: **Bohemian Rhapsody** [`5:55`]');
+    assert.equal(state.catchAttached, true, 'send() should have .catch attached');
   });
 
-  test('addSong: anuncia la canción añadida', () => {
+  test('addSong: announces the added song', () => {
     const { channel, state } = makeChannel();
     listeners.get('addSong')(
       { textChannel: channel, songs: [{ name: 'A' }] },
       { name: 'Song X' }
     );
-    assert.equal(state.sent[0], '➕ Añadido: **Song X**');
+    assert.equal(state.sent[0], '➕ Added: **Song X**');
   });
 
-  test('addSong con cola llena: recorta la cola y avisa', () => {
+  test('addSong with a full queue: trims the queue and warns', () => {
     const { channel, state } = makeChannel();
     const queue = {
       textChannel: channel,
       songs: Array.from({ length: 101 }, () => ({ name: 'X' })),
     };
     listeners.get('addSong')(queue, { name: 'Song Y' });
-    assert.equal(queue.songs.length, 100, 'debería recortar a MAX_QUEUE_SIZE');
+    assert.equal(queue.songs.length, 100, 'should trim to MAX_QUEUE_SIZE');
     assert.equal(
       state.sent[0],
-      '⚠️ Cola llena (máximo 100 canciones). No se agregó: **Song Y**'
+      '⚠️ Queue full (max 100 songs). Not added: **Song Y**'
     );
   });
 
-  test('addList: anuncia la playlist con la cantidad de canciones', () => {
+  test('addList: announces the playlist with the number of songs', () => {
     const { channel, state } = makeChannel();
     listeners.get('addList')(
       { textChannel: channel, songs: [{ name: 'A' }] },
       { name: 'Top Hits', songs: [{}, {}, {}, {}, {}] }
     );
-    assert.equal(state.sent[0], '📃 Lista añadida: **Top Hits** con 5 canciones.');
+    assert.equal(state.sent[0], '📃 Playlist added: **Top Hits** with 5 songs.');
   });
 
-  test('addList con cola llena: recorta y avisa cuántas canciones se recortaron', () => {
+  test('addList with a full queue: trims and warns how many songs were trimmed', () => {
     const { channel, state } = makeChannel();
     const queue = {
       textChannel: channel,
@@ -128,20 +127,20 @@ describe('config/distube', () => {
     };
     listeners.get('addList')(queue, { name: 'Mega Mix', songs: [] });
     assert.equal(queue.songs.length, 100);
-    assert.ok(state.sent[0].includes('se recortaron 5 canciones'));
-    assert.ok(state.sent[0].includes('máximo 100'));
+    assert.ok(state.sent[0].includes('trimmed 5 songs'));
+    assert.ok(state.sent[0].includes('max 100'));
   });
 
-  test('error: envía el mensaje de error al canal de texto', (t) => {
+  test('error: sends the error message to the text channel', (t) => {
     mock.method(console, 'error', () => {});
     t.after(() => mock.restoreAll());
     const { channel, state } = makeChannel();
     listeners.get('error')(new Error('boom'), { textChannel: channel });
-    assert.equal(state.sent[0], '❌ Error al reproducir música.');
+    assert.equal(state.sent[0], '❌ Error playing music.');
     assert.equal(state.catchAttached, true);
   });
 
-  test('error sin textChannel: no crashea ni envía nada', (t) => {
+  test('error without textChannel: does not crash or send anything', (t) => {
     mock.method(console, 'error', () => {});
     t.after(() => mock.restoreAll());
     const { channel, state } = makeChannel();
@@ -149,21 +148,21 @@ describe('config/distube', () => {
     assert.equal(state.sent.length, 0);
   });
 
-  test('finish: avisa que la reproducción terminó', () => {
+  test('finish: announces that playback finished', () => {
     const { channel, state } = makeChannel();
     listeners.get('finish')({ textChannel: channel });
-    assert.equal(state.sent[0], '✅ Reproducción terminada.');
+    assert.equal(state.sent[0], '✅ Playback finished.');
   });
 
-  test('empty: avisa que el canal quedó vacío', () => {
+  test('empty: announces that the channel is now empty', () => {
     const { channel, state } = makeChannel();
     listeners.get('empty')({ textChannel: channel });
-    assert.equal(state.sent[0], '📭 Canal de voz vacío, saliendo...');
+    assert.equal(state.sent[0], '📭 Voice channel empty, leaving...');
   });
 
-  test('disconnect: avisa que se desconectó del canal', () => {
+  test('disconnect: announces it disconnected from the channel', () => {
     const { channel, state } = makeChannel();
     listeners.get('disconnect')({ textChannel: channel });
-    assert.equal(state.sent[0], '👋 Me desconecté del canal.');
+    assert.equal(state.sent[0], '👋 Disconnected from the channel.');
   });
 });

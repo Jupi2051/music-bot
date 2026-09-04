@@ -4,10 +4,10 @@ const { assertControl } = require('../utils/helpers');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('stop')
-    .setDescription('Detiene la música y hace que el bot salga del canal de voz'),
+    .setDescription('Stops the music and makes the bot leave the voice channel'),
   async execute(interaction, client) {
     const queue = client.distube.getQueue(interaction);
-    if (!queue) return interaction.reply({ content: '❌ No hay música reproduciéndose.', ephemeral: true });
+    if (!queue) return interaction.reply({ content: '❌ No music is playing.', ephemeral: true });
 
     const controlError = assertControl(interaction, queue.voiceChannel?.id);
     if (controlError) return interaction.reply({ content: controlError, ephemeral: true });
@@ -16,10 +16,10 @@ module.exports = {
       await queue.stop();
       const connection = client.distube.voices.get(interaction.guild.id);
       if (connection) connection.leave();
-      await interaction.reply('🛑 Música detenida y bot desconectado del canal de voz.');
+      await interaction.reply('🛑 Music stopped and bot disconnected from the voice channel.');
     } catch (error) {
-      console.error('Error al detener la música:', error);
-      await interaction.reply('❌ Hubo un error al detener la música.').catch(() => {});
+      console.error('Error stopping the music:', error);
+      await interaction.reply('❌ There was an error stopping the music.').catch(() => {});
     }
   },
 };

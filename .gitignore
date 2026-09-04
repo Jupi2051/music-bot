@@ -1,4 +1,4 @@
-# Dependencias
+# Dependencies
 node_modules/
 yarn.lock
 
@@ -7,30 +7,30 @@ logs
 *.log
 npm-debug.log*
 
-# Variables de entorno
+# Environment variables
 .env
 
-# Archivos de sistema
+# System files
 .DS_Store
 Thumbs.db
 
-# Archivos temporales
+# Temp files
 tmp/
 temp/
 
-# Directorios de cobertura
+# Coverage directories
 coverage/
 
-# Archivos de IDE
+# IDE files
 .idea/
 .vscode/
 *.swp
 *.swo
 cookies.txt
 
-# Estado de runtime del bot
+# Bot runtime state
 commands-state.json
 bot-state.json
 
-# Cache de skills de opencode (no pertenece al proyecto)
+# opencode skills cache (not part of the project)
 .atl/

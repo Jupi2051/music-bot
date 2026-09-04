@@ -20,7 +20,7 @@
   ],
   "author": "Santino",
   "license": "MIT",
-  "description": "Un bot de música para Discord que reproduce música de YouTube, Spotify y SoundCloud",
+  "description": "A Discord music bot that plays music from YouTube, Spotify and SoundCloud",
   "dependencies": {
     "@discordjs/opus": "^0.10.0",
     "@distube/soundcloud": "^2.0.4",

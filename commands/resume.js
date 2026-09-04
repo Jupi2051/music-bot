@@ -4,11 +4,11 @@ const { assertControl } = require('../utils/helpers');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('resume')
-    .setDescription('Reanuda la música pausada'),
+    .setDescription('Resumes the paused music'),
   async execute(interaction, client) {
     const queue = client.distube.getQueue(interaction);
     if (!queue || queue.playing) {
-      return interaction.reply({ content: '❌ No hay música pausada.', ephemeral: true });
+      return interaction.reply({ content: '❌ No music is paused.', ephemeral: true });
     }
 
     const controlError = assertControl(interaction, queue.voiceChannel?.id);
@@ -17,9 +17,9 @@ module.exports = {
     try {
       await queue.resume();
     } catch (error) {
-      console.error('Error al reanudar:', error);
-      return interaction.reply('❌ No se pudo reanudar la música.');
+      console.error('Error resuming:', error);
+      return interaction.reply('❌ Could not resume the music.');
     }
-    await interaction.reply('▶️ Música reanudada.');
+    await interaction.reply('▶️ Music resumed.');
   },
 };

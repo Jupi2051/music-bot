@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 'use strict';
 
-// Descarga el binario de yt-dlp que usa @distube/yt-dlp y VERIFICA que quedó
-// completo antes de terminar.
+// Downloads the yt-dlp binary used by @distube/yt-dlp and VERIFIES it's
+// complete before finishing.
 //
-// ¿Por qué existe? download() del plugin resuelve su promesa antes de que el
-// writeFile interno termine (bug upstream 2.0.1, parcheado en patches/). Un
-// `process.exit()` inmediato — como hacía el Dockerfile — mataba el proceso a
-// mitad de escritura y dejaba un binario de 0 bytes: el bot arrancaba normal,
-// las búsquedas por texto funcionaban (van por SoundCloud) pero los ENLACES
-// fallaban siempre. Este script espera la escritura y valida el tamaño.
+// Why does this exist? The plugin's download() resolves its promise before
+// the internal writeFile finishes (upstream bug in 2.0.1, patched in
+// patches/). An immediate `process.exit()` — like the Dockerfile used to do —
+// killed the process mid-write and left a 0-byte binary: the bot started
+// normally, text searches worked (they go through SoundCloud) but LINKS
+// always failed. This script waits for the write and validates the size.
 //
-// Uso: `npm run setup:ytdlp` (local) o `RUN node scripts/download-ytdlp.js`
-// en el Dockerfile (falla el build si la descarga es incompleta).
+// Usage: `npm run setup:ytdlp` (local) or `RUN node scripts/download-ytdlp.js`
+// in the Dockerfile (fails the build if the download is incomplete).
 
 const { statSync } = require('fs');
 const { download } = require('@distube/yt-dlp');
@@ -25,17 +25,17 @@ async function main() {
   try {
     size = statSync(binPath).size;
   } catch {
-    // ENOENT: evaluateYtDlpBinary lo reporta como faltante
+    // ENOENT: evaluateYtDlpBinary reports it as missing
   }
   const verdict = evaluateYtDlpBinary({ exists: size !== null, size });
   if (!verdict.ok) {
     console.error(verdict.reason);
     process.exit(1);
   }
-  console.log(`✅ yt-dlp ${version} listo (${(size / (1024 * 1024)).toFixed(1)}MB) en ${binPath}`);
+  console.log(`✅ yt-dlp ${version} ready (${(size / (1024 * 1024)).toFixed(1)}MB) at ${binPath}`);
 }
 
 main().catch((err) => {
-  console.error('❌ No se pudo descargar el binario de yt-dlp:', err.message);
+  console.error('❌ Could not download the yt-dlp binary:', err.message);
   process.exit(1);
 });

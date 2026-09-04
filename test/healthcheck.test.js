@@ -1,7 +1,7 @@
 'use strict';
 
-// Tests del healthcheck: cubre los modos de fallo y la decisión de auto-recuperación
-// (matar el PID 1 ante hang). La lógica es pura (evaluateHealth), testeable sin /proc.
+// Tests for the healthcheck: covers the failure modes and the auto-recovery
+// decision (killing PID 1 on a hang). The logic is pure (evaluateHealth), testable without /proc.
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -10,7 +10,7 @@ const { evaluateHealth, MAX_AGE_MS, MIN_UP_TIME_MS } = require('../healthcheck')
 
 const NOW = 1_000_000_000_000;
 
-test('pasa cuando el heartbeat es fresco', () => {
+test('passes when the heartbeat is fresh', () => {
   const result = evaluateHealth({
     stateExists: true,
     lastUpdate: NOW - 20_000,
@@ -21,7 +21,7 @@ test('pasa cuando el heartbeat es fresco', () => {
   assert.equal(result.kill, false);
 });
 
-test('no mata si el heartbeat falta pero el proceso está en arranque', () => {
+test('does not kill if the heartbeat is missing but the process is starting up', () => {
   const result = evaluateHealth({
     stateExists: false,
     lastUpdate: null,
@@ -32,7 +32,7 @@ test('no mata si el heartbeat falta pero el proceso está en arranque', () => {
   assert.equal(result.kill, false);
 });
 
-test('mata si el heartbeat nunca se escribió y el proceso lleva mucho tiempo', () => {
+test('kills if the heartbeat was never written and the process has been up for a while', () => {
   const result = evaluateHealth({
     stateExists: false,
     lastUpdate: null,
@@ -43,7 +43,7 @@ test('mata si el heartbeat nunca se escribió y el proceso lleva mucho tiempo', 
   assert.equal(result.kill, true);
 });
 
-test('no mata si el heartbeat venció pero el proceso es joven (arranque con archivo viejo)', () => {
+test('does not kill if the heartbeat expired but the process is young (startup with a stale file)', () => {
   const result = evaluateHealth({
     stateExists: true,
     lastUpdate: NOW - MAX_AGE_MS - 5_000,
@@ -54,7 +54,7 @@ test('no mata si el heartbeat venció pero el proceso es joven (arranque con arc
   assert.equal(result.kill, false);
 });
 
-test('mata si el heartbeat venció y el proceso lleva mucho tiempo (hang real)', () => {
+test('kills if the heartbeat expired and the process has been up for a while (real hang)', () => {
   const result = evaluateHealth({
     stateExists: true,
     lastUpdate: NOW - MAX_AGE_MS - 5_000,
@@ -65,7 +65,7 @@ test('mata si el heartbeat venció y el proceso lleva mucho tiempo (hang real)',
   assert.equal(result.kill, true);
 });
 
-test('procesoStartMs desconocido: no mata, solo falla', () => {
+test('unknown processStartMs: does not kill, only fails', () => {
   const result = evaluateHealth({
     stateExists: true,
     lastUpdate: NOW - MAX_AGE_MS - 5_000,

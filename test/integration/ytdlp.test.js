@@ -1,14 +1,14 @@
 'use strict';
 
-// Tests de integración opt-in: usan red real contra YouTube y el binario
-// yt-dlp local (node_modules/@distube/yt-dlp/bin/yt-dlp). NO corren con
-// `npm test`; se ejecutan explícitamente con `npm run test:integration`
-// (requiere TEST_INTEGRATION=1, seteado por el propio script).
+// Opt-in integration tests: use real network against YouTube and the local
+// yt-dlp binary (node_modules/@distube/yt-dlp/bin/yt-dlp). They do NOT run
+// with `npm test`; run them explicitly with `npm run test:integration`
+// (requires TEST_INTEGRATION=1, set by the script itself).
 //
-// Estos tests cubren los dos fallos de producción de 2026-08:
-//  1. Resolución de un video individual (bot-check / config de yt-dlp).
-//  2. Radios RD (listas ilimitadas) — deben resolverse acotadas por
-//     --playlist-end 25, aplicado vía config temporal de yt-dlp.
+// These tests cover the two production failures from 2026-08:
+//  1. Resolving a single video (bot-check / yt-dlp config).
+//  2. RD radios (unbounded lists) — must resolve bounded by
+//     --playlist-end 25, applied via a temporary yt-dlp config.
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -27,14 +27,14 @@ function integrationTest(name, options, fn) {
       ...options,
       skip: INTEGRATION_ENABLED
         ? false
-        : 'opt-in: corré con `npm run test:integration`',
+        : 'opt-in: run with `npm run test:integration`',
     },
     fn,
   );
 }
 
-// Directorio temporal con config de yt-dlp (--playlist-end) para aislar el
-// test de la config del sistema. Devuelve cleanup que restaura el entorno.
+// Temporary directory with a yt-dlp config (--playlist-end) to isolate the
+// test from the system config. Returns a cleanup function that restores the environment.
 function withTmpYtDlpConfig(lines) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ytdlp-int-'));
   const cfgDir = path.join(tmp, 'yt-dlp');
@@ -50,7 +50,7 @@ function withTmpYtDlpConfig(lines) {
 }
 
 integrationTest(
-  '@integration: resuelve un video individual de YouTube',
+  '@integration: resolves a single YouTube video',
   { timeout: 90_000 },
   async () => {
     const cleanup = withTmpYtDlpConfig(['--js-runtimes node', '--extractor-args youtube:player_client=android']);
@@ -60,9 +60,9 @@ integrationTest(
         'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         { member: { id: 'test' } },
       );
-      assert.ok(song, 'resolve() devolvió undefined');
-      assert.match(song.url, /youtube\.com/, 'la URL resuelta debe ser de YouTube');
-      assert.ok(song.name.length > 0, 'el nombre no debe estar vacío');
+      assert.ok(song, 'resolve() returned undefined');
+      assert.match(song.url, /youtube\.com/, 'the resolved URL should be a YouTube URL');
+      assert.ok(song.name.length > 0, 'the name should not be empty');
     } finally {
       cleanup();
     }
@@ -70,7 +70,7 @@ integrationTest(
 );
 
 integrationTest(
-  '@integration: una radio RD se resuelve acotada por --playlist-end 25',
+  '@integration: an RD radio resolves bounded by --playlist-end 25',
   { timeout: 120_000 },
   async () => {
     const cleanup = withTmpYtDlpConfig([
@@ -84,12 +84,12 @@ integrationTest(
         'https://www.youtube.com/watch?v=GK4nqwzLevY&list=RDGK4nqwzLevY&start_radio=1',
         { member: { id: 'test' } },
       );
-      assert.ok(playlist, 'resolve() devolvió undefined');
-      assert.ok(Array.isArray(playlist.songs), 'debe devolver una playlist');
-      assert.ok(playlist.songs.length > 0, 'la playlist no debe estar vacía');
+      assert.ok(playlist, 'resolve() returned undefined');
+      assert.ok(Array.isArray(playlist.songs), 'should return a playlist');
+      assert.ok(playlist.songs.length > 0, 'the playlist should not be empty');
       assert.ok(
         playlist.songs.length <= 25,
-        `la playlist debe estar acotada a 25, recibí ${playlist.songs.length}`,
+        `the playlist should be bounded to 25, got ${playlist.songs.length}`,
       );
     } finally {
       cleanup();

@@ -16,36 +16,36 @@ function makeInteraction({ channelId = 'vc-1' } = {}) {
 }
 
 describe('assertControl', () => {
-  test('devuelve error si el usuario no está en un canal de voz', () => {
+  test('returns an error if the user is not in a voice channel', () => {
     const interaction = makeInteraction({ channelId: null });
     assert.equal(
       assertControl(interaction, 'vc-bot'),
-      '❌ Debes estar en un canal de voz.'
+      '❌ You must be in a voice channel.'
     );
   });
 
-  test('devuelve error si el usuario está en un canal distinto al del bot', () => {
+  test('returns an error if the user is in a different channel than the bot', () => {
     const interaction = makeInteraction({ channelId: 'vc-user' });
     assert.equal(
       assertControl(interaction, 'vc-bot'),
-      '❌ Debes estar en el mismo canal de voz que el bot.'
+      '❌ You must be in the same voice channel as the bot.'
     );
   });
 
-  test('devuelve null si el usuario está en el mismo canal que el bot', () => {
+  test('returns null if the user is in the same channel as the bot', () => {
     const interaction = makeInteraction({ channelId: 'vc-bot' });
     assert.equal(assertControl(interaction, 'vc-bot'), null);
   });
 
-  test('devuelve null si no hay botChannelId aunque el usuario esté en voz', () => {
+  test('returns null if there is no botChannelId even if the user is in voice', () => {
     const interaction = makeInteraction({ channelId: 'vc-user' });
     assert.equal(assertControl(interaction, undefined), null);
   });
 });
 
 describe('checkCooldown', () => {
-  // El Map de cooldowns es compartido a nivel de módulo: cada test usa una
-  // key distinta para no interferir. Se stubbea Date.now para no dormir.
+  // The cooldowns Map is shared at module level: each test uses a distinct
+  // key to avoid interfering with the others. Date.now is stubbed to avoid sleeping.
   let now = 0;
 
   beforeEach(() => {
@@ -57,16 +57,16 @@ describe('checkCooldown', () => {
     mock.restoreAll();
   });
 
-  test('la primera llamada permite la acción (devuelve false)', () => {
+  test('the first call allows the action (returns false)', () => {
     assert.equal(checkCooldown('helpers-key-a', 500), false);
   });
 
-  test('la segunda llamada inmediata bloquea (devuelve true)', () => {
+  test('an immediate second call blocks (returns true)', () => {
     checkCooldown('helpers-key-b', 500);
     assert.equal(checkCooldown('helpers-key-b', 500), true);
   });
 
-  test('después de esperar el ms permitido vuelve a permitir', () => {
+  test('allows again after waiting the permitted ms', () => {
     checkCooldown('helpers-key-c', 500);
     now = 1501;
     assert.equal(checkCooldown('helpers-key-c', 500), false);
@@ -74,124 +74,124 @@ describe('checkCooldown', () => {
 });
 
 describe('cleanQuery', () => {
-  test('devuelve texto plano sin cambios', () => {
-    assert.equal(cleanQuery('mi canción'), 'mi canción');
+  test('returns plain text unchanged', () => {
+    assert.equal(cleanQuery('my song'), 'my song');
   });
 
-  test('extrae la URL del mensaje pegado del bot', () => {
-    const pasted = '🔍 Buscando: `https://www.youtube.com/watch?v=eBqthnZnu3Y`';
+  test('extracts the URL from the bot\'s pasted message', () => {
+    const pasted = '🔍 Searching: `https://www.youtube.com/watch?v=eBqthnZnu3Y`';
     assert.equal(cleanQuery(pasted), 'https://www.youtube.com/watch?v=eBqthnZnu3Y');
   });
 
-  test('recorta puntuación de cierre pegada a la URL', () => {
+  test('trims trailing punctuation stuck to the URL', () => {
     assert.equal(
-      cleanQuery('mirá https://www.youtube.com/watch?v=eBqthnZnu3Y).'),
+      cleanQuery('check this out https://www.youtube.com/watch?v=eBqthnZnu3Y).'),
       'https://www.youtube.com/watch?v=eBqthnZnu3Y',
     );
   });
 
-  test('quita backticks envolventes de un query sin URL', () => {
-    assert.equal(cleanQuery('`mi canción`'), 'mi canción');
+  test('removes surrounding backticks from a query without a URL', () => {
+    assert.equal(cleanQuery('`my song`'), 'my song');
   });
 
-  test('devuelve vacío para entradas no string', () => {
+  test('returns empty for non-string inputs', () => {
     assert.equal(cleanQuery(null), '');
     assert.equal(cleanQuery(undefined), '');
   });
 });
 
 describe('isPlaylistUrl', () => {
-  test('detecta playlist de YouTube', () => {
+  test('detects a YouTube playlist', () => {
     assert.equal(isPlaylistUrl('https://www.youtube.com/playlist?list=PLabc123'), true);
     assert.equal(isPlaylistUrl('https://www.youtube.com/watch?v=x&list=RDabc123'), true);
     assert.equal(isPlaylistUrl('https://youtu.be/x?list=PLabc123'), true);
   });
 
-  test('detecta playlist y álbum de Spotify', () => {
+  test('detects a Spotify playlist and album', () => {
     assert.equal(isPlaylistUrl('https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M'), true);
     assert.equal(isPlaylistUrl('https://open.spotify.com/album/6k3L0Pk8yRfDbq6Jw9dG2m'), true);
   });
 
-  test('detecta sets de SoundCloud', () => {
+  test('detects SoundCloud sets', () => {
     assert.equal(isPlaylistUrl('https://soundcloud.com/dj-foo/sets/mix-2026'), true);
   });
 
-  test('no detecta videos sueltos ni queries de texto', () => {
+  test('does not detect standalone videos or text queries', () => {
     assert.equal(isPlaylistUrl('https://www.youtube.com/watch?v=eBqthnZnu3Y'), false);
-    assert.equal(isPlaylistUrl('mi canción favorita'), false);
+    assert.equal(isPlaylistUrl('my favorite song'), false);
     assert.equal(isPlaylistUrl(null), false);
   });
 });
 
 describe('getQueryError', () => {
-  test('bloquea queries que empiezan con guion (inyección de flags de yt-dlp)', () => {
-    assert.equal(getQueryError('-x'), '❌ Ese término de búsqueda no es válido.');
-    assert.equal(getQueryError('--update-to=attacker/repo@tag'), '❌ Ese término de búsqueda no es válido.');
+  test('blocks queries starting with a dash (yt-dlp flag injection)', () => {
+    assert.equal(getQueryError('-x'), '❌ That search term is not valid.');
+    assert.equal(getQueryError('--update-to=attacker/repo@tag'), '❌ That search term is not valid.');
   });
 
-  test('bloquea protocolos no-http(s) (LFI vía file://)', () => {
-    assert.equal(getQueryError('file:///etc/passwd'), '❌ Solo se admiten enlaces http(s).');
-    assert.equal(getQueryError('ftp://x.com/y'), '❌ Solo se admiten enlaces http(s).');
+  test('blocks non-http(s) protocols (LFI via file://)', () => {
+    assert.equal(getQueryError('file:///etc/passwd'), '❌ Only http(s) links are supported.');
+    assert.equal(getQueryError('ftp://x.com/y'), '❌ Only http(s) links are supported.');
   });
 
-  test('permite URLs http(s) normales', () => {
+  test('allows normal http(s) URLs', () => {
     assert.equal(getQueryError('https://youtube.com/watch?v=abc'), null);
   });
 
-  test('no bloquea texto normal con guiones adentro', () => {
+  test('does not block normal text containing dashes', () => {
     assert.equal(getQueryError('Duki - She Don\'t Give a Fo'), null);
   });
 
-  test('bloquea queries vacías o no string', () => {
-    assert.equal(getQueryError(''), '❌ Ingresá un nombre o URL.');
-    assert.equal(getQueryError('   '), '❌ Ingresá un nombre o URL.');
-    assert.equal(getQueryError(null), '❌ Ingresá un nombre o URL.');
+  test('blocks empty or non-string queries', () => {
+    assert.equal(getQueryError(''), '❌ Enter a name or URL.');
+    assert.equal(getQueryError('   '), '❌ Enter a name or URL.');
+    assert.equal(getQueryError(null), '❌ Enter a name or URL.');
   });
 });
 
 describe('evaluateYtDlpBinary', () => {
-  test('rechaza cuando el binario no existe', () => {
+  test('rejects when the binary does not exist', () => {
     const verdict = evaluateYtDlpBinary({ exists: false, size: undefined });
     assert.equal(verdict.ok, false);
-    assert.match(verdict.reason, /Falta el binario de yt-dlp/);
-    assert.match(verdict.reason, /setup:ytdlp/, 'debe sugerir el comando de reparación');
+    assert.match(verdict.reason, /Missing yt-dlp binary/);
+    assert.match(verdict.reason, /setup:ytdlp/, 'should suggest the repair command');
   });
 
-  test('rechaza un binario vacío o truncado (descarga interrumpida)', () => {
+  test('rejects an empty or truncated binary (interrupted download)', () => {
     for (const size of [0, 1, 1024]) {
       const verdict = evaluateYtDlpBinary({ exists: true, size });
       assert.equal(verdict.ok, false);
-      assert.match(verdict.reason, /vacío o truncado/);
-      assert.ok(verdict.reason.includes(String(size)), 'el motivo debe incluir el tamaño real');
+      assert.match(verdict.reason, /empty or truncated/);
+      assert.ok(verdict.reason.includes(String(size)), 'the reason should include the actual size');
     }
   });
 
-  test('acepta un binario de tamaño razonable', () => {
+  test('accepts a reasonably sized binary', () => {
     assert.deepEqual(evaluateYtDlpBinary({ exists: true, size: YT_DLP_MIN_BYTES }), { ok: true });
     assert.deepEqual(evaluateYtDlpBinary({ exists: true, size: 3_072_464 }), { ok: true });
   });
 
-  test('rechaza tamaños no numéricos aunque exista', () => {
+  test('rejects non-numeric sizes even if it exists', () => {
     const verdict = evaluateYtDlpBinary({ exists: true, size: undefined });
     assert.equal(verdict.ok, false);
   });
 });
 
 describe('ytDlpBinaryPath', () => {
-  test('apunta al bin dentro del paquete por defecto', () => {
+  test('points to the bin inside the package by default', () => {
     const p = ytDlpBinaryPath();
-    assert.ok(p.includes('@distube/yt-dlp'), 'la ruta debe vivir dentro del paquete');
+    assert.ok(p.includes('@distube/yt-dlp'), 'the path should live inside the package');
     assert.ok(p.endsWith(`yt-dlp${process.platform === 'win32' ? '.exe' : ''}`));
   });
 
-  test('honra los overrides YTDLP_DIR y YTDLP_FILENAME como el plugin', () => {
+  test('honors the YTDLP_DIR and YTDLP_FILENAME overrides like the plugin', () => {
     const prevDir = process.env.YTDLP_DIR;
     const prevFile = process.env.YTDLP_FILENAME;
     process.env.YTDLP_DIR = '/opt/ytdlp';
-    process.env.YTDLP_FILENAME = 'mi-yt-dlp';
+    process.env.YTDLP_FILENAME = 'my-yt-dlp';
     try {
       const p = ytDlpBinaryPath();
-      assert.equal(p, require('node:path').join('/opt/ytdlp', 'mi-yt-dlp'));
+      assert.equal(p, require('node:path').join('/opt/ytdlp', 'my-yt-dlp'));
     } finally {
       if (prevDir === undefined) delete process.env.YTDLP_DIR;
       else process.env.YTDLP_DIR = prevDir;

@@ -1,60 +1,60 @@
 # Changelog
 
-Todos los cambios notables en este proyecto serán documentados en este archivo.
+All notable changes to this project will be documented in this file.
 
-## [Unreleased] — Seguridad
+## [Unreleased] — Security
 
-- Hardening anti-RCE: se bloquean queries que empiezan con `-` (inyección de flags de yt-dlp) y protocolos no-http(s) (`file://` → LFI).
-- El binario de yt-dlp ya no se auto-actualiza en runtime: se descarga en build-time y node_modules queda inmutable en el contenedor.
+- Anti-RCE hardening: blocks queries starting with `-` (yt-dlp flag injection) and non-http(s) protocols (`file://` → LFI).
+- The yt-dlp binary no longer auto-updates at runtime: it's downloaded at build time and node_modules stays immutable in the container.
 
-### Corregido
+### Fixed
 
-- **Los enlaces no reproducen (las búsquedas por texto sí)**: `download()` de @distube/yt-dlp resuelve su promesa antes de terminar la escritura del binario, y el `process.exit(0)` inmediato del Dockerfile dejaba un binario de 0 bytes en la imagen. Las búsquedas siguen funcionando porque van por SoundCloud (no usan yt-dlp); los enlaces fallaban siempre.
-  - El parche del plugin ahora espera la escritura y hace que `json()` rechace con error claro si yt-dlp sale sin output (antes: crash por `JSON.parse('')`).
-  - Nuevo `scripts/download-ytdlp.js` (`npm run setup:ytdlp`): descarga y valida el tamaño del binario; el Dockerfile lo usa y falla el build si la descarga es incompleta.
-  - El bot verifica el binario al arrancar y corta con mensaje accionable si falta o está truncado.
+- **Links don't play (text searches do)**: @distube/yt-dlp's `download()` resolves its promise before the binary write finishes, and the Dockerfile's immediate `process.exit(0)` left a 0-byte binary in the image. Searches kept working because they go through SoundCloud (they don't use yt-dlp); links always failed.
+  - The plugin patch now waits for the write and makes `json()` reject with a clear error if yt-dlp exits with no output (previously: crash from `JSON.parse('')`).
+  - New `scripts/download-ytdlp.js` (`npm run setup:ytdlp`): downloads and validates the binary size; the Dockerfile uses it and fails the build if the download is incomplete.
+  - The bot checks the binary on startup and stops with an actionable message if it's missing or truncated.
 
 ## [1.2.1] - 2026-08-02
 
-### Cambiado
-- `/play` muestra "📃 Cargando playlist..." para URLs de playlist/álbum/radio (YouTube, Spotify, SoundCloud) en vez del "🔍 Buscando:" genérico, para que la espera de resolución no parezca un cuelgue
-- Límite de canciones por playlist/radio de 25 a 15 (la extracción de yt-dlp es secuencial: ~1.5s por canción; una playlist de 25 tardaba ~42s)
+### Changed
+- `/play` shows "📃 Loading playlist..." for playlist/album/radio URLs (YouTube, Spotify, SoundCloud) instead of the generic "🔍 Searching:", so the resolution wait doesn't look like a hang
+- Song limit per playlist/radio reduced from 25 to 15 (yt-dlp extraction is sequential: ~1.5s per song; a 25-song playlist took ~42s)
 
 ## [1.2.0] - 2026-08-02
 
-### Añadido
-- Credenciales de Spotify Developer (SPOTIFY_CLIENT_ID/SPOTIFY_CLIENT_SECRET) para reproducción completa de playlists y álbumes vía la API oficial de Spotify
+### Added
+- Spotify Developer credentials (SPOTIFY_CLIENT_ID/SPOTIFY_CLIENT_SECRET) for full playlist and album playback via the official Spotify API
 
-### Cambiado
-- SpotifyPlugin usa la API oficial cuando hay credenciales en `.env`; sin ellas conserva el comportamiento anterior (solo metadata básica)
+### Changed
+- SpotifyPlugin uses the official API when credentials are present in `.env`; without them it keeps the previous behavior (basic metadata only)
 
 ## [1.1.0] - 2026-08-02
 
-### Añadido
-- Validaciones de uso como respuestas ephemeral (solo el usuario las ve) en play, stop, skip, pause, resume, volume, leave y queue
-- Tests para errores de ejecución de pause/resume y recorte de puntuación en URLs pegadas
-- Guard anti-solapamiento en la actualización periódica de comandos (cada 6h)
-- Limpieza automática de entradas vencidas en el Map de cooldowns
-- Fallback de CLIENT_ID en update-commands.js para evitar el PUT a `/applications/undefined/commands`
+### Added
+- Usage validations as ephemeral responses (only the requesting user sees them) in play, stop, skip, pause, resume, volume, leave and queue
+- Tests for execution errors in pause/resume and trimming punctuation from pasted URLs
+- Anti-overlap guard on the periodic command update (every 6h)
+- Automatic cleanup of expired entries in the cooldowns Map
+- CLIENT_ID fallback in update-commands.js to avoid a PUT to `/applications/undefined/commands`
 
-### Cambiado
-- skip.js distingue "no hay más canciones" de errores reales al saltar
-- cleanQuery recorta puntuación de cierre pegada a URLs (ej: `https://...watch?v=x).`)
-- .dockerignore excluye tests, estado de runtime y cookies del build
-- .gitignore ya no ignora package-lock.json (debe permanecer commiteado para `npm ci`)
+### Changed
+- skip.js distinguishes "no more songs" from real errors when skipping
+- cleanQuery trims trailing punctuation stuck to URLs (e.g. `https://...watch?v=x).`)
+- .dockerignore excludes tests, runtime state and cookies from the build
+- .gitignore no longer ignores package-lock.json (it must stay committed for `npm ci`)
 
-### Corregido
-- Carga de comandos ignora archivos no `.js` en la carpeta commands (evitaba crash loop)
-- stop.js respondía el error de canal como mensaje público; ahora es ephemeral
+### Fixed
+- Command loading ignores non-`.js` files in the commands folder (was causing a crash loop)
+- stop.js replied to the channel error as a public message; now it's ephemeral
 
 ## [1.0.0] - 2025-05-25
 
-### Añadido
-- Comandos básicos: play, pause, resume, stop, skip, queue, volume, help
-- Soporte para YouTube, Spotify y SoundCloud
-- Documentación inicial
-- Registro global de comandos
-- Configuración para múltiples servidores
+### Added
+- Basic commands: play, pause, resume, stop, skip, queue, volume, help
+- Support for YouTube, Spotify and SoundCloud
+- Initial documentation
+- Global command registration
+- Multi-server configuration
 
-### Eliminado
-- Comandos de utilidad innecesarios (stats, ping, nowplaying)
+### Removed
+- Unnecessary utility commands (stats, ping, nowplaying)

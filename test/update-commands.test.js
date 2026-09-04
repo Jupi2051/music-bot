@@ -1,16 +1,16 @@
 'use strict';
 
-// Tests de update-commands.js. Estrategia:
-// - El módulo usa path.join(__dirname, ...) apuntando a la raíz real del repo,
-//   así que se stubbean fs.existsSync/readFileSync/writeFileSync para redirigir
-//   el state file a un Map en memoria (nunca se toca commands-state.json real).
-// - require('discord.js') se intercepta con un Proxy que solo reemplaza REST
-//   (para capturar el PUT) y deja pasar el resto real (SlashCommandBuilder,
-//   Routes) a los comandos.
+// Tests for update-commands.js. Strategy:
+// - The module uses path.join(__dirname, ...) pointing at the real repo root,
+//   so fs.existsSync/readFileSync/writeFileSync are stubbed to redirect the
+//   state file to an in-memory Map (the real commands-state.json is never touched).
+// - require('discord.js') is intercepted with a Proxy that only replaces REST
+//   (to capture the PUT) and passes everything else (SlashCommandBuilder,
+//   Routes) through to the commands.
 //
-// NOT TESTABLE: la rama require.main === module (deploy manual vía
-// `node update-commands.js`) y el PUT real a la API de Discord: requerirían
-// red real o un spawn de proceso, fuera de alcance de este archivo.
+// NOT TESTABLE: the require.main === module branch (manual deploy via
+// `node update-commands.js`) and a real PUT to the Discord API: would require
+// real network or a process spawn, out of scope for this file.
 
 process.env.TOKEN = 'test-token';
 process.env.CLIENT_ID = '123456789';
@@ -48,7 +48,7 @@ class FakeREST {
   async put(url, options) {
     eventLog.push('put');
     this.calls.push({ url, body: options.body });
-    if (rest.fail) throw new Error('deploy falla (simulado)');
+    if (rest.fail) throw new Error('deploy failed (simulated)');
     return {};
   }
 }
@@ -99,68 +99,68 @@ beforeEach(() => {
 });
 
 describe('checkAndUpdateCommands', () => {
-  test('primer arranque sin state file: hace PUT y recién después guarda el estado', async () => {
+  test('first run without a state file: does a PUT and only then saves state', async () => {
     const result = await checkAndUpdateCommands();
 
     assert.equal(result, true);
     assert.equal(rest.instances.length, 1);
     const putCall = rest.instances[0].calls[0];
-    assert.ok(putCall, 'debería haber llamado a REST.put');
+    assert.ok(putCall, 'should have called REST.put');
     assert.match(putCall.url, /\/applications\/123456789\/commands$/);
-    assert.equal(putCall.body.length, 9);
+    assert.equal(putCall.body.length, 10);
 
-    // Orden crítico: deploy primero, guardar estado después
+    // Critical order: deploy first, save state after
     assert.deepEqual(eventLog, ['put', 'write']);
 
     const written = JSON.parse(stateStore.get(statePath));
-    assert.equal(written.count, 9);
+    assert.equal(written.count, 10);
     assert.ok(written.hash.length > 0);
     assert.ok(written.timestamp);
     firstHash = written.hash;
   });
 
-  test('segundo arranque sin cambios: NO hace PUT, solo actualiza timestamp', async () => {
-    assert.ok(firstHash, 'el hash capturado del primer arranque');
+  test('second run without changes: does NOT do a PUT, only updates the timestamp', async () => {
+    assert.ok(firstHash, 'the hash captured from the first run');
     stateStore.set(
       statePath,
-      JSON.stringify({ hash: firstHash, timestamp: 'anterior', count: 9 })
+      JSON.stringify({ hash: firstHash, timestamp: 'previous', count: 9 })
     );
 
     const result = await checkAndUpdateCommands();
 
     assert.equal(result, false);
-    assert.equal(rest.instances.length, 0, 'no debería hacer deploy');
+    assert.equal(rest.instances.length, 0, 'should not deploy');
     assert.deepEqual(eventLog, ['write']);
   });
 
-  test('deploy que falla: no guarda el hash nuevo, queda el viejo', async () => {
+  test('a failing deploy: does not save the new hash, keeps the old one', async () => {
     stateStore.set(
       statePath,
-      JSON.stringify({ hash: 'old-hash-000', timestamp: 'anterior', count: 9 })
+      JSON.stringify({ hash: 'old-hash-000', timestamp: 'previous', count: 9 })
     );
     rest.fail = true;
 
     const result = await checkAndUpdateCommands();
 
     assert.equal(result, false);
-    assert.equal(rest.instances[0].calls.length, 1, 'debería intentar el deploy');
-    assert.ok(!eventLog.includes('write'), 'no debería guardar estado tras un deploy fallido');
+    assert.equal(rest.instances[0].calls.length, 1, 'should attempt the deploy');
+    assert.ok(!eventLog.includes('write'), 'should not save state after a failed deploy');
     assert.equal(JSON.parse(stateStore.get(statePath)).hash, 'old-hash-000');
   });
 
-  test('primer arranque con deploy fallido: no se crea el archivo de estado', async () => {
+  test('first run with a failing deploy: the state file is not created', async () => {
     rest.fail = true;
 
     const result = await checkAndUpdateCommands();
 
     assert.equal(result, false);
-    assert.equal(stateStore.size, 0, 'no debería existir state file');
+    assert.equal(stateStore.size, 0, 'the state file should not exist');
   });
 
-  test('tras un deploy fallido, el siguiente arranque reintenta y guarda el estado', async () => {
+  test('after a failed deploy, the next run retries and saves state', async () => {
     stateStore.set(
       statePath,
-      JSON.stringify({ hash: 'old-hash-000', timestamp: 'anterior', count: 9 })
+      JSON.stringify({ hash: 'old-hash-000', timestamp: 'previous', count: 9 })
     );
     rest.fail = true;
     assert.equal(await checkAndUpdateCommands(), false);

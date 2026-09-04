@@ -1,50 +1,50 @@
 # Contributing
 
-¡Gracias por querer contribuir a GordoDJ! Todo aporte suma: bugs, tests, documentación y features.
+Thanks for wanting to contribute to GordoDJ! Every contribution helps: bugs, tests, docs and features.
 
-## Código de conducta
+## Code of conduct
 
-Se breve y respetuoso. El proyecto es un bot de música comunitario: las discusiones técnicas se resuelven con evidencia, no con tono.
+Be brief and respectful. This is a community music bot project: technical discussions are settled with evidence, not tone.
 
-## Empezando
+## Getting started
 
-1. Forkeá el repo y cloná tu fork.
-2. Instalá dependencias: `npm install` (usa `package-lock.json`, así que preferí `npm ci` si podés).
-3. Creá un `.env` a partir de `.env.example` con tu propio TOKEN de Discord (nunca commitees secretos).
-4. Corré los tests: `npm test`.
+1. Fork the repo and clone your fork.
+2. Install dependencies: `npm install` (it uses `package-lock.json`, so prefer `npm ci` if you can).
+3. Create a `.env` from `.env.example` with your own Discord TOKEN (never commit secrets).
+4. Run the tests: `npm test`.
 
-## Reglas de oro
+## Golden rules
 
-- **NUNCA commitees secretos**: `.env`, `cookies.txt`, tokens o credenciales jamás entran al repo. Si un `.env` está en un diff, se rechaza el PR.
-- **Siempre con tests**: cada fix o feature nueva agrega o actualiza tests en `test/`. La suite usa `node:test` nativo (Node >= 20.18.1).
-- **Commits convencionales**: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`. Sin atribución AI ni "Co-Authored-By" generados.
-- **Sin humo**: los cambios se prueban contra la suite completa (`npm test`) antes de abrir el PR.
-- **Cambios mínimos**: un PR por tema. Si tocás más de ~400 líneas, dividí en PRs más chicos.
+- **NEVER commit secrets**: `.env`, `cookies.txt`, tokens or credentials never go into the repo. If a `.env` shows up in a diff, the PR is rejected.
+- **Always with tests**: every fix or new feature adds or updates tests in `test/`. The suite uses native `node:test` (Node >= 20.18.1).
+- **Conventional commits**: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`. No AI attribution or generated "Co-Authored-By".
+- **No smoke**: changes are verified against the full suite (`npm test`) before opening the PR.
+- **Minimal changes**: one PR per topic. If you touch more than ~400 lines, split it into smaller PRs.
 
-## Estructura del proyecto
+## Project structure
 
-- `index.js` — bootstrap del bot, carga de comandos y eventos, heartbeat
-- `commands/` — un archivo por slash command
-- `events/` — manejadores de eventos de discord.js
-- `config/distube.js` — instancia de DisTube y plugins (Spotify, SoundCloud, yt-dlp)
-- `utils/helpers.js` — helpers compartidos (cleanQuery, cooldowns, validaciones)
-- `test/` — suite con `node:test` (unit + integración opt-in)
+- `index.js` — bot bootstrap, command/event loading, heartbeat
+- `commands/` — one file per slash command
+- `events/` — discord.js event handlers
+- `config/distube.js` — DisTube instance and plugins (Spotify, SoundCloud, yt-dlp)
+- `utils/helpers.js` — shared helpers (cleanQuery, cooldowns, validations)
+- `test/` — suite using `node:test` (unit + opt-in integration)
 
-## Tests de integración
+## Integration tests
 
-Los tests de integración (requieren red y yt-dlp) corren con `npm run test:integration`. No son parte de `npm test` porque dependen de red; usalos con criterio.
+Integration tests (require network and yt-dlp) run with `npm run test:integration`. They're not part of `npm test` because they depend on the network; use them judiciously.
 
-## Reportar bugs
+## Reporting bugs
 
-Antes de abrir un issue, revisá la sección "Solución de problemas" del README. Incluí: versión de Node, salida de `docker logs` (si aplica), el comando que falló y el mensaje de error completo. Nunca pegues tokens ni cookies en el issue.
+Before opening an issue, check the "Troubleshooting" section of the README. Include: Node version, `docker logs` output (if applicable), the command that failed and the full error message. Never paste tokens or cookies into the issue.
 
-## Proceso de PR
+## PR process
 
-1. Creá una branch con nombre descriptivo (`fix/skip-error`, `feat/equalizer`).
-2. Hacé commits pequeños y convencionales.
-3. Corré `npm test` en verde.
-4. Abrí el PR con descripción clara: qué cambia, por qué, y cómo se probó.
+1. Create a branch with a descriptive name (`fix/skip-error`, `feat/equalizer`).
+2. Make small, conventional commits.
+3. Run `npm test` and make sure it's green.
+4. Open the PR with a clear description: what changes, why, and how it was tested.
 
-## Duda
+## Not sure where to start?
 
-¿No sabés por dónde empezar? Buscá issues etiquetados `good first issue` o abrí un issue preguntando — siempre hay algo para hacer.
+Look for issues tagged `good first issue` or open an issue asking — there's always something to do.
